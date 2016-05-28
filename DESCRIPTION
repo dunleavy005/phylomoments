@@ -20,6 +20,7 @@ Suggests:
     rmarkdown,
     rphast (>= 1.6)
 LinkingTo: Rcpp, RcppArmadillo (>= 0.6.700.3.0)
+URL: https://github.com/dunleavy005/phylomoments
 BugReports: https://github.com/dunleavy005/phylomoments/issues
 LazyData: true
 RoxygenNote: 5.0.1

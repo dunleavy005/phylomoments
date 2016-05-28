@@ -1,0 +1,161 @@
+---
+title: "Evolutionary Conservation Testing"
+author: "Amrit Dhar"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Evolutionary Conservation Testing}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+This vignette illustrates how to test for evolutionary conservation in genomic sequence alignments.
+Specifically, we focus on two statistical tests of conservation across all branches of a phylogeny.
+Both test the null hypothesis of neutral evolution against the alternative hypothesis of phylogeny-wide conservation.
+The first test is known as the original SPH conservation test, while the second test is referred to as the modified SPH conservation test.
+The two tests are nearly identical; the only difference is that the original SPH test uses an improper null distribution, whereas the modified SPH test employs a proper null distribution.
+
+We demonstrate the utility of the modified SPH conservation test by performing simulation experiments.
+The power and false positive rates of the original and modified SPH conservation tests are evaluated using simulated alignments.
+The neutral evolutionary model utilized in all our simulation experiments was estimated using fourfold degenerate sites extracted from alignments of the 44 ENCODE regions for 36 vertebrate species; this estimated neutral model is stored in the file `encode_36way.mod`.
+
+```{r}
+library(ape)
+library(phylomoments)
+library(rphast)
+set.seed(0)
+opar = par(no.readonly = TRUE)
+
+# load estimated neutral model
+neut.tm = read.tm(system.file("extdata", "encode_36way.mod", package = "phylomoments"))
+neut.tree = read.tree(text = neut.tm$tree)
+neut.tree = reorder(neut.tree, order = "pruningwise")
+
+# initialize other parameters
+rate.mat = matrix(neut.tm$rate.matrix, nrow = 4, ncol = 4)
+root.dist = neut.tm$backgd
+label.mat = matrix(1, nrow = 4, ncol = 4) - diag(1, 4)
+edges.all = 1:nrow(neut.tree$edge)
+```
+
+Let $L$ and $\rho$ denote the number of sites in a sequence alignment and the scale parameter applied to all branch lengths of the neutral phylogeny, respectively.
+We simulate replicate alignments with $L$ sites according to the $\rho$-scaled neutral model; in our simulations, we consider $L = 1, 4, 10$ and $\rho = 0.3, 0.5, 0.7, 1$.
+For each setting of $L$ and $\rho$, we generate 500 replicate datasets, compute the conservation $p$-values for each dataset using the original and modified SPH tests, and estimate the power (or false positive rate when $\rho = 1$) by calculating the proportion of $p$-values less than the given significance level; we construct power and false positive rate curves by varying the significance threshold between 0 and 1.
+
+```{r, fig.align = "center", fig.height = 5, fig.width = 7, fig.show = "hold"}
+# simulation parameters
+sim.params = expand.grid("L" = c(1, 4, 10), "rho" = c(0.3, 0.5, 0.7, 1))
+
+# moments of the proper null distribution
+null.moments = postmean.moments.phylojumps(neut.tree, rate.mat, label.mat, edges.all,
+                                           root.dist, scale = TRUE, N = 10000)
+
+# running simulations
+outp = vector("list", length = nrow(sim.params))
+
+for (j in 1:nrow(sim.params)) {
+  
+  L = sim.params[j,"L"]
+  rho = sim.params[j,"rho"]
+  
+  cons.tree = neut.tree
+  cons.tree$edge.length = rho * cons.tree$edge.length
+  
+  outp[[j]] = t(sapply(1:500, function(i) {
+    
+    # simulate "conserved" alignment
+    cons.align = tips.sim(cons.tree, rate.mat, root.dist, scale = TRUE,
+                          states = c("a","c","g","t"), N = L)
+    
+    cons.msa = msa(apply(cons.align, 1, paste, collapse = ""),
+                   alphabet = "acgt", names = cons.tree$tip.label)
+    
+    # calculate conservation p-values using the original and modified SPH tests
+    test.stat = unname(
+      post.moments.phylojumps(neut.tree, rate.mat, label.mat,
+                              edges.all, root.dist, scale = TRUE,
+                              states = c("a","c","g","t"), cons.align)["mean"]
+    )
+    
+    mod.pval = pnorm(test.stat, mean = L * null.moments["mean"],
+                     sd = sqrt(L * null.moments["var"]))
+    orig.pval = phyloP.sph(neut.tm, cons.msa, fit.model = FALSE)$pval.cons
+    
+    
+    return(c("mod.pval" = mod.pval, "orig.pval" = orig.pval))
+  }))
+}
+
+# plotting power and false positive rate curves
+alpha = seq(0, 1, by = 0.0001)
+
+par(mar = c(2,2,0,0))
+layout(matrix(c(0, 4, 5, 6, 0, 7, 0, 1, 11, 12, 13, 2, 14, 8, 1, 15, 16, 17, 2, 18, 9, 1, 19,
+                20, 21, 2, 22, 10, 0, 3, 3, 3, 3, 3, 0), nrow = 5, ncol = 7, byrow = TRUE),
+       widths = c(0.5, 1, 1, 1, 0.5, 1, 0.65), heights = c(0.5, 1, 1, 1, 0.5))
+
+plot(c(0,1), c(0,1), axes = FALSE, type = "n", xlab = "", ylab = "")
+text(x = 0.15, y = 0.5, labels = "Power", cex = 1.75, srt = 90)
+plot(c(0,1), c(0,1), axes = FALSE, type = "n", xlab = "", ylab = "")
+text(x = 0.15, y = 0.5, labels = "False Positive Rate", cex = 1.75, srt = 90)
+plot(c(0,1), c(0,1), axes = FALSE, type = "n", xlab = "", ylab = "")
+text(x = 0.5, y = 0.25, labels = "Significance Level", cex = 1.75)
+
+for (rho in c(0.3, 0.5, 0.7, 1)) {
+  
+  plot(c(0,1), c(0,1), axes = FALSE, type = "n", xlab = "", ylab = "")
+  text(x = 0.5, y = 0.25, labels = bquote(rho == .(rho)), cex = 1.625)
+  
+}
+
+for (L in c(1, 4, 10)) {
+  
+  plot(c(0,1), c(0,1), axes = FALSE, type = "n", xlab = "", ylab = "")
+  text(x = 0.4, y = 0.5, labels = bquote(L == .(L)), cex = 1.625)
+  
+}
+
+for (L in c(1, 4, 10)) {
+  for (rho in c(0.3, 0.5, 0.7, 1)) {
+    
+    index = which(sim.params$L == L & sim.params$rho == rho)
+    dat = outp[[index]]
+    
+    mod.ecdf = ecdf(dat[,"mod.pval"])
+    orig.ecdf = ecdf(dat[,"orig.pval"])
+    
+    plot(alpha, mod.ecdf(alpha), lwd = 2, type = "l", xlab = "",
+         ylab = "", xlim = c(0,1), xaxt = "n", yaxt = "n")
+    axis(1, at = seq(0, 1, by = 0.25),
+         labels = if(L == 10) seq(0, 1, by = 0.25) else FALSE)
+    axis(2, at = seq(0, 1, by = 0.25), las = 1,
+         labels = if(rho %in% c(0.3, 1)) seq(0, 1, by = 0.25) else FALSE)
+    lines(alpha, orig.ecdf(alpha), lwd = 2, col = 2)
+    
+    if(L == 4 & rho == 0.7) {
+      
+      arrows(x0 = c(0.425, 0.7), y0 = c(0.2, 0.6), x1 = c(0.225, 0.425),
+             y1 = c(0.7, 0.775), length = 0.05, angle = 30, lwd = 2, col = 1:2)
+      text(x = c(0.425, 0.7), y = c(0.2, 0.6), pos = 1, cex = 1,
+           labels = c("Modified SPH", "Original SPH"), col = 1:2)
+      
+    }
+    
+  }
+}
+```
+
+The power plots suggest that the modified SPH conservation test is more powerful than the original SPH conservation test.
+The gap between the power curves for the two tests is negligible for large $L$ and small $\rho$ but increases as we examine shorter alignments with lower levels of conservation.
+The false positive rate plots seem to indicate that the $p$-values obtained from the modified SPH test are approximately uniformly distributed under the null hypothesis.
+It is also apparent that the original SPH $p$-values are conservative under the null hypothesis.
+Thus, our simulation experiments show that the modified SPH test is better than the original SPH test at detecting phylogeny-wide conservation in genomic sequence alignments.
+
+

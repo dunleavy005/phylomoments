@@ -1,0 +1,263 @@
+---
+title: "Rate Variation Testing"
+author: "Amrit Dhar"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Rate Variation Testing}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+This vignette demonstrates how to perform a posterior predictive test for rate variation across sites.
+We test for among-site rate variation in two sequence alignments.
+Our first dataset contains $\beta$-globin sequences for 17 vertebrate species, where each sequence is 432 base pairs long.
+Our second dataset comprises 28 sequences of the hemagglutinin (HA) gene of human influenza virus A; each sequence has 987 base pairs.
+
+For each dataset, we use the computer program MrBayes to generate 1000 approximately independent posterior samples of trees and model parameters.
+In all our analyses, we use a general time-reversible (GTR) substitution model with a Dirichlet(1,1,1,1,1,1) prior for the GTR exchangeability rates and a Dirichlet(1,1,1,1) prior for the base frequencies.
+Furthermore, we assume a uniform prior on all possible tree topologies and let all branch lengths be a priori uniformly distributed on the interval $[0,100]$.
+
+The files `bglobin.nex` and `flu28.nex` contain the $\beta$-globin and influenza datasets, respectively.
+The posterior samples of trees and model parameters for the $\beta$-globin dataset are stored in the files `bglobin.nex.t` and `bglobin.nex.p`, respectively, while the posterior samples of trees and model parameters for the influenza dataset are stored in the files `flu28.nex.t` and `flu28.nex.p`, respectively.
+Let's load these files into R.
+
+```{r}
+library(ape)
+library(phylomoments)
+set.seed(0)
+opar = par(no.readonly = TRUE)
+
+# load datasets
+bglobin.data = read.nexus.data(system.file("extdata", "bglobin.nex", package = "phylomoments"))
+bglobin.data = do.call(rbind, bglobin.data)
+
+flu.data = read.nexus.data(system.file("extdata", "flu28.nex", package = "phylomoments"))
+flu.data = do.call(rbind, flu.data)
+
+# load posterior samples of trees and model parameters
+bglobin.trees = read.nexus(system.file("extdata", "bglobin.nex.t", package = "phylomoments"))
+bglobin.params = read.table(system.file("extdata", "bglobin.nex.p", package = "phylomoments"),
+                            header = TRUE, sep = "\t", skip = 1)
+
+flu.trees = read.nexus(system.file("extdata", "flu28.nex.t", package = "phylomoments"))
+flu.params = read.table(system.file("extdata", "flu28.nex.p", package = "phylomoments"),
+                        header = TRUE, sep = "\t", skip = 1)
+```
+
+The two discrepancy measures we consider in our analyses are the posterior variance $T_{var}$ and posterior dispersion index $T_{disp}$ (i.e. posterior variance-to-mean ratio) for substitution counts.
+For each posterior sample, we simulate a replicate alignment according to the continuous-time Markov model of evolution and compute the observed and predicted discrepancies.
+
+```{r}
+# beta-globin analysis
+outp.bglobin = t(sapply(1:length(bglobin.trees), function(i) {
+  
+  # setting up tree
+  tree = root(bglobin.trees[[i]], outgroup = 1, resolve.root = TRUE)
+  tree = reorder(tree, order = "pruningwise")
+  
+  # initializing other inputs
+  params = unlist(bglobin.params[i,])
+  GTR.rates = params[grep("r.", names(params))]
+  root.dist = params[grep("pi.", names(params))]
+  label.mat = matrix(1, nrow = 4, ncol = 4) - diag(1, 4)
+  edge.set = 1:nrow(tree$edge)
+  
+  # constructing GTR rate matrix
+  rate.mat = matrix(0, nrow = 4, ncol = 4)
+  rate.mat[lower.tri(rate.mat, diag = FALSE)] = GTR.rates
+  rate.mat = (rate.mat + t(rate.mat)) %*% diag(root.dist)
+  diag(rate.mat) = -apply(rate.mat, 1, sum)
+  
+  # generating replicate dataset
+  bglobin.rep.data = tips.sim(tree, rate.mat, root.dist, scale = TRUE, N = ncol(bglobin.data))
+  
+  # calculating observed and predicted discrepancies
+  post.moments.obs = post.moments.phylojumps(tree, rate.mat, label.mat,
+                                             edge.set, root.dist, scale = TRUE,
+                                             states = c("a","c","g","t"), bglobin.data)
+  
+  post.var.obs = unname(post.moments.obs["var"])
+  post.disp.obs = unname(post.moments.obs["var"] / post.moments.obs["mean"])
+  
+  post.moments.pred = post.moments.phylojumps(tree, rate.mat, label.mat,
+                                              edge.set, root.dist, scale = TRUE,
+                                              states = c("a","c","g","t"), bglobin.rep.data)
+  
+  post.var.pred = unname(post.moments.pred["var"])
+  post.disp.pred = unname(post.moments.pred["var"] / post.moments.pred["mean"])
+  
+  
+  return(c("post.var.obs" = post.var.obs, "post.disp.obs" = post.disp.obs,
+           "post.var.pred" = post.var.pred, "post.disp.pred" = post.disp.pred))
+}))
+
+
+# flu analysis
+outp.flu = t(sapply(1:length(flu.trees), function(i) {
+  
+  # setting up tree
+  tree = root(flu.trees[[i]], outgroup = 1, resolve.root = TRUE)
+  tree = reorder(tree, order = "pruningwise")
+  
+  # initializing other inputs
+  params = unlist(flu.params[i,])
+  GTR.rates = params[grep("r.", names(params))]
+  root.dist = params[grep("pi.", names(params))]
+  label.mat = matrix(1, nrow = 4, ncol = 4) - diag(1, 4)
+  edge.set = 1:nrow(tree$edge)
+  
+  # constructing GTR rate matrix
+  rate.mat = matrix(0, nrow = 4, ncol = 4)
+  rate.mat[lower.tri(rate.mat, diag = FALSE)] = GTR.rates
+  rate.mat = (rate.mat + t(rate.mat)) %*% diag(root.dist)
+  diag(rate.mat) = -apply(rate.mat, 1, sum)
+  
+  # generating replicate dataset
+  flu.rep.data = tips.sim(tree, rate.mat, root.dist, scale = TRUE, N = ncol(flu.data))
+  
+  # calculating observed and predicted discrepancies
+  post.moments.obs = post.moments.phylojumps(tree, rate.mat, label.mat,
+                                             edge.set, root.dist, scale = TRUE,
+                                             states = c("a","c","g","t"), flu.data)
+  
+  post.var.obs = unname(post.moments.obs["var"])
+  post.disp.obs = unname(post.moments.obs["var"] / post.moments.obs["mean"])
+  
+  post.moments.pred = post.moments.phylojumps(tree, rate.mat, label.mat,
+                                              edge.set, root.dist, scale = TRUE,
+                                              states = c("a","c","g","t"), flu.rep.data)
+  
+  post.var.pred = unname(post.moments.pred["var"])
+  post.disp.pred = unname(post.moments.pred["var"] / post.moments.pred["mean"])
+  
+  
+  return(c("post.var.obs" = post.var.obs, "post.disp.obs" = post.disp.obs,
+           "post.var.pred" = post.var.pred, "post.disp.pred" = post.disp.pred))
+}))
+```
+
+If the assumed evolutionary model adequately fits the observed data, then the observed and predicted discrepancies should be similar in value.
+We compare the observed and predicted discrepancy values by constructing two separate histograms; a small overlap between these two histograms suggests a poor model fit.
+
+The following figure displays the observed and predicted distributions of the two discrepancy measures discussed previously.
+The top row of the figure shows the distributions for the $\beta$-globin dataset, while the bottom row of the figure presents the distributions for the influenza dataset.
+
+```{r, fig.align = "center", fig.height = 4.5, fig.width = 7, fig.show = "hold"}
+par(mfrow = c(2,2), mar = c(5.1, 4.6, 2.1, 2.1))
+
+# beta-globin "T_{var}" histograms
+bglobin.post.var.obs.hist = hist(outp.bglobin[,"post.var.obs"], breaks = 20, plot = FALSE)
+bglobin.post.var.pred.hist = hist(outp.bglobin[,"post.var.pred"], breaks = 20, plot = FALSE)
+
+bglobin.post.var.ylim = pretty(c(bglobin.post.var.obs.hist$density,
+                                 bglobin.post.var.pred.hist$density), n = 3)
+
+plot(bglobin.post.var.pred.hist, freq = FALSE, xlab = expression(T[var]), ylab = "",
+     xlim = range(c(bglobin.post.var.obs.hist$mids, bglobin.post.var.pred.hist$mids)),
+     yaxt = "n", col = grey(0, alpha = 0.75), main = "", ylim = c(0, max(bglobin.post.var.ylim)))
+
+axis(2, at = bglobin.post.var.ylim, labels = bglobin.post.var.ylim, las = 1)
+title(ylab = "Density", line = 3.5)
+lines(bglobin.post.var.obs.hist, freq = FALSE, col = grey(0.65, alpha = 0.75))
+
+
+# beta-globin "T_{disp}" histograms
+bglobin.post.disp.obs.hist = hist(outp.bglobin[,"post.disp.obs"], breaks = 20, plot = FALSE)
+bglobin.post.disp.pred.hist = hist(outp.bglobin[,"post.disp.pred"], breaks = 20, plot = FALSE)
+
+bglobin.post.disp.ylim = pretty(c(bglobin.post.disp.obs.hist$density,
+                                  bglobin.post.disp.pred.hist$density), n = 3)
+
+plot(bglobin.post.disp.pred.hist, freq = FALSE, xlab = expression(T[disp]), ylab = "",
+     xlim = range(c(bglobin.post.disp.obs.hist$mids, bglobin.post.disp.pred.hist$mids)),
+     yaxt = "n", col = grey(0, alpha = 0.75), main = "", ylim = c(0, max(bglobin.post.disp.ylim)))
+
+axis(2, at = bglobin.post.disp.ylim, labels = bglobin.post.disp.ylim, las = 1)
+title(ylab = "Density", line = 3.5)
+lines(bglobin.post.disp.obs.hist, freq = FALSE, col = grey(0.65, alpha = 0.75))
+
+
+# flu "T_{var}" histograms
+flu.post.var.obs.hist = hist(outp.flu[,"post.var.obs"], breaks = 20, plot = FALSE)
+flu.post.var.pred.hist = hist(outp.flu[,"post.var.pred"], breaks = 20, plot = FALSE)
+
+flu.post.var.ylim = pretty(c(flu.post.var.obs.hist$density,
+                             flu.post.var.pred.hist$density), n = 3)
+
+plot(flu.post.var.pred.hist, freq = FALSE, xlab = expression(T[var]), ylab = "",
+     xlim = range(c(flu.post.var.obs.hist$mids, flu.post.var.pred.hist$mids)),
+     yaxt = "n", col = grey(0, alpha = 0.75), main = "", ylim = c(0, max(flu.post.var.ylim)))
+
+axis(2, at = flu.post.var.ylim, labels = flu.post.var.ylim, las = 1)
+title(ylab = "Density", line = 3.5)
+lines(flu.post.var.obs.hist, freq = FALSE, col = grey(0.65, alpha = 0.75))
+
+
+# flu "T_{disp}" histograms
+flu.post.disp.obs.hist = hist(outp.flu[,"post.disp.obs"], breaks = 20, plot = FALSE)
+flu.post.disp.pred.hist = hist(outp.flu[,"post.disp.pred"], breaks = 20, plot = FALSE)
+
+flu.post.disp.ylim = pretty(c(flu.post.disp.obs.hist$density,
+                              flu.post.disp.pred.hist$density), n = 3)
+
+plot(flu.post.disp.pred.hist, freq = FALSE, xlab = expression(T[disp]), ylab = "",
+     xlim = range(c(flu.post.disp.obs.hist$mids, flu.post.disp.pred.hist$mids)),
+     yaxt = "n", col = grey(0, alpha = 0.75), main = "", ylim = c(0, max(flu.post.disp.ylim)))
+
+axis(2, at = flu.post.disp.ylim, labels = flu.post.disp.ylim, las = 1)
+title(ylab = "Density", line = 3.5)
+lines(flu.post.disp.obs.hist, freq = FALSE, col = grey(0.65, alpha = 0.75))
+
+arrows(x0 = c(0.014625, 0.025), y0 = c(215, 215), x1 = c(0.016, 0.02275), y1 = c(140, 115),
+       length = 0.05, angle = 30, lwd = 2, col = grey(c(0, 0.55), alpha = 1))
+text(x = c(0.014625, 0.025), y = c(215, 215), col = grey(c(0, 0.50), alpha = 1),
+     pos = c(3,3), cex = 0.9, labels = c("Predicted\nDistribution", "Observed\nDistribution"))
+
+par(opar)
+```
+
+We see that the observed distributions of $T_{var}$ do not deviate much from the corresponding predicted distributions of $T_{var}$.
+In contrast, the observed and predicted distributions of $T_{disp}$ don't completely overlap and appear more separated than the observed and predicted distributions of $T_{var}$.
+For both datasets, the observed values of $T_{disp}$ are, on average, greater than the predicted values of $T_{disp}$.
+This suggests that the discrepancy $T_{disp}$, unlike $T_{var}$, is able to detect observed rate variation that isn't accounted for by our hypothesized model.
+
+We can quantify the disagreement between the observed and predicted discrepancies by calculating the posterior predictive $p$-value.
+We approximate the posterior predictive $p$-values associated with the discrepancies $T_{var}$ and $T_{disp}$ for the $\beta$-globin and influenza datasets.
+
+```{r}
+# beta-globin "T_{var}" p-value
+bglobin.post.var.ppp = mean(
+  apply(outp.bglobin, 1, function(row) row["post.var.pred"] > row["post.var.obs"])
+)
+bglobin.post.var.ppp
+
+# beta-globin "T_{disp}" p-value
+bglobin.post.disp.ppp = mean(
+  apply(outp.bglobin, 1, function(row) row["post.disp.pred"] > row["post.disp.obs"])
+)
+bglobin.post.disp.ppp
+
+# flu "T_{var}" p-value
+flu.post.var.ppp = mean(
+  apply(outp.flu, 1, function(row) row["post.var.pred"] > row["post.var.obs"])
+)
+flu.post.var.ppp
+
+# flu "T_{disp}" p-value
+flu.post.disp.ppp = mean(
+  apply(outp.flu, 1, function(row) row["post.disp.pred"] > row["post.disp.obs"])
+)
+flu.post.disp.ppp
+```
+
+The posterior predictive $p$-values that were computed using the discrepancy $T_{disp}$ are smaller than the corresponding $p$-values that were computed using $T_{var}$ and as a result provide stronger evidence in support of the rate variation hypothesis.
+Thus, our posterior predictive analyses suggest that the posterior dispersion index $T_{disp}$ is better than the posterior variance $T_{var}$ at detecting observed rate variation among sites.
+

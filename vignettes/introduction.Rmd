@@ -1,0 +1,185 @@
+---
+title: "Introductory Examples"
+author: "Amrit Dhar"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introductory Examples}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+This vignette provides some simple toy examples to help illustrate how to use the functions contained in this package.
+First, we generate a random phylogenetic tree with $n = 8$ tips using the R package `ape`.
+We display this phylogeny below and annotate the nodes (<font color="green">green</font>) and branches (<font color="red">red</font>) with their corresponding indices.
+
+```{r, fig.align = "center", fig.height = 3, fig.width = 5, fig.show = "hold"}
+library(ape)
+library(phylomoments)
+set.seed(0)
+opar = par(no.readonly = TRUE)
+
+ex.tree = rtree(8, rooted = TRUE)
+# edge matrix must be in "pruningwise" order
+ex.tree = reorder(ex.tree, order = "pruningwise")
+
+par(mar = c(1,1,3,1))
+plot(ex.tree, main = "Example Phylogeny", show.tip.label = FALSE)
+edgelabels(frame = "none", col = "red", pos = c(rep(3, 4), 1, rep(3, 8), 1), offset = 0.25)
+nodelabels(frame = "none", col = "darkgreen", pos = 4, offset = 0.1)
+tiplabels(frame = "none", col = "darkgreen", pos = 4, offset = 0.2)
+par(opar)
+```
+
+In our examples, we'll use a general time-reversible (GTR) substitution model for DNA nucleotides and label all possible types of substitutions.
+A GTR rate matrix for DNA nucleotides is parametrized by 6 exchangeability rates (i.e. $r_{AC}, r_{AG}, r_{AT}, r_{CG}, r_{CT}, r_{GT}$) and 4 base frequencies (i.e. $\pi_A, \pi_C, \pi_G, \pi_T$).
+
+```{r}
+# piA = 0.15, piC = 0.5, piG = 0.15, piT = 0.2
+root.dist = c(0.15, 0.5, 0.15, 0.2)
+
+# rAC = 0.2, rAG = 0.3, rAT = 0.6, rCG = 0.4, rCT = 0.1, rGT = 0.5
+GTR.rates = c(0.2, 0.3, 0.6, 0.4, 0.1, 0.5)
+
+# GTR rate matrix
+rate.mat = matrix(0, nrow = 4, ncol = 4)
+rate.mat[lower.tri(rate.mat, diag = FALSE)] = GTR.rates
+rate.mat = (rate.mat + t(rate.mat)) %*% diag(root.dist)
+diag(rate.mat) = -apply(rate.mat, 1, sum)
+
+# label matrix
+label.mat = matrix(1, nrow = 4, ncol = 4) - diag(1, 4)
+```
+
+Now, we simulate a sequence alignment with $L = 10$ sites using the example phylogeny and substitution model parameters generated previously.
+We implicitly assume that evolution is independent and identically distributed at different sites in the alignment.
+
+```{r}
+# simulate alignment
+seq.data = tips.sim(ex.tree, rate.mat, root.dist, scale = TRUE, states = c("a","c","g","t"), N = 10)
+seq.data
+```
+
+## Posterior Moments
+
+Given this simulated sequence alignment, let's calculate the mean and variance of the number of substitutions on the example tree.
+
+```{r}
+# edge set of interest
+edges.all = 1:nrow(ex.tree$edge)
+
+# calculate the posterior moments for the entire alignment
+post.moments.all = post.moments.phylojumps(ex.tree, rate.mat, label.mat, edges.all, root.dist,
+                                           scale = TRUE, states = c("a","c","g","t"), seq.data)
+post.moments.all
+```
+
+Thus, the expected number of substitutions on the example phylogeny is `r signif(post.moments.all["mean"], digits = 3)` for this sequence alignment.
+In addition, we can easily compute the mean number of substitutions on the example tree for a particular site in `seq.data`.
+
+```{r}
+# calculate the posterior moments for the 1st site in "seq.data"
+post.moments.first = post.moments.phylojumps(ex.tree, rate.mat, label.mat,
+                                             edges.all, root.dist, scale = TRUE,
+                                             states = c("a","c","g","t"), matrix(seq.data[,1]))
+post.moments.first
+```
+
+Note that our exact posterior moments of the number of substitutions on the example tree can be approximated using simulation-based stochastic mapping.
+
+```{r}
+# approximate the posterior moments for the entire alignment
+jumps.sim.all = phylojumps.sim(ex.tree, rate.mat, root.dist, scale = TRUE,
+                               states = c("a","c","g","t"), seq.data, N = 1000)
+sum(apply(jumps.sim.all, 2, mean))
+sum(apply(jumps.sim.all, 2, var))
+
+# approximate the posterior moments for the 1st site in "seq.data"
+jumps.sim.first = phylojumps.sim(ex.tree, rate.mat, root.dist, scale = TRUE,
+                                 states = c("a","c","g","t"), matrix(seq.data[,1]), N = 1000)
+sum(apply(jumps.sim.first, 2, mean))
+sum(apply(jumps.sim.first, 2, var))
+```
+
+We might also want to compute the posterior moments of substitution counts on a particular subtree of the example phylogeny.
+
+```{r}
+# edge set defining a subtree of interest
+edges.sub = c(5, 6, 7, 8, 10)
+
+# calculate the posterior moments on a subtree
+post.moments.sub = post.moments.phylojumps(ex.tree, rate.mat, label.mat, edges.sub, root.dist,
+                                           scale = TRUE, states = c("a","c","g","t"), seq.data)
+post.moments.sub
+```
+
+In fact, we can calculate the posterior mean and variance of the number of substitutions over any set of branches on the example tree.
+
+## Prior Moments
+
+It is also possible to calculate prior moments of substitution counts (i.e. moments that average over all possible tip states).
+We compute the prior mean and variance of the number of substitutions on the example phylogeny.
+
+```{r}
+# calculate the prior moments
+prior.moments.all = prior.moments.phylojumps(ex.tree, rate.mat, label.mat,
+                                             edges.all, root.dist, scale = TRUE)
+prior.moments.all
+```
+
+Thus, the prior mean and variance of substitution counts over $L = 10$ sites are `r signif(10*prior.moments.all["mean"], digits = 3)` and `r signif(10*prior.moments.all["var"], digits = 4)`, respectively.
+The prior mean is close to the corresponding posterior mean (`r signif(post.moments.all["mean"], digits = 3)`), but the prior variance is much larger than the corresponding posterior variance (`r signif(post.moments.all["var"], digits = 3)`).
+
+For $L$ large, the Law of Large Numbers suggests that the posterior mean of substitution counts for an alignment with $L$ sites multiplied by $\frac{1}{L}$ will be approximately equal to the prior mean of substitution counts.
+We provide a simple example that supports the previous statement.
+
+```{r}
+# generate a large sequence alignment
+seq.data.large = tips.sim(ex.tree, rate.mat, root.dist, scale = TRUE,
+                          states = c("a","c","g","t"), N = 50000)
+
+# calculate the posterior moments for the large sequence alignment
+post.moments.large = post.moments.phylojumps(ex.tree, rate.mat, label.mat,
+                                             edges.all, root.dist, scale = TRUE,
+                                             states = c("a","c","g","t"), seq.data.large)
+
+# LLN comparison
+post.moments.large["mean"] / 50000
+prior.moments.all["mean"]
+```
+
+## Joint Moments
+
+The prior covariance of substitution counts can be efficiently computed as well.
+
+```{r}
+# two subtrees of interest
+edge.set1 = c(3, 4, 5, 6, 7, 8, 9, 10, 12)
+edge.set2 = c(1, 2, 11, 13, 14)
+
+# joint prior moments
+joint.prior.moments = joint.prior.moments.phylojumps(ex.tree, rate.mat, label.mat,
+                                                     edge.set1, edge.set2, subtree = NULL,
+                                                     root.dist, scale = TRUE)
+joint.prior.moments
+```
+
+In this particular case, we can obtain the same results by specifying the `subtree` argument.
+
+```{r}
+# joint prior moments - specifying "subtree"
+joint.prior.moments.phylojumps(ex.tree, rate.mat, label.mat,
+                               edge.set1 = NULL, edge.set2 = NULL,
+                               subtree = 12, root.dist, scale = TRUE)
+```
+
+The posterior covariance of substitution counts is calculated similarly using the `joint.post.moments.phylojumps` function.
+For more details on the functions discussed in this vignette, please refer to the documentation provided in this R package.
+

@@ -17,7 +17,7 @@ and continuous-time Markov chains (CTMCs) are also provided.
   provided in this package.
 }
 \author{
-Amrit Dhar <\email{adhar@uw.edu}>
+Amrit Dhar \email{adhar@uw.edu}
 }
 \references{
 OUR PAPER!!!

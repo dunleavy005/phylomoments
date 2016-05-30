@@ -13,7 +13,7 @@
 #' @section : Please see the vignettes for some examples of using the functions 
 #'   provided in this package.
 #'   
-#' @author Amrit Dhar <\email{adhar@@uw.edu}>
+#' @author Amrit Dhar \email{adhar@@uw.edu}
 #'   
 #' @references OUR PAPER!!!
 #'   

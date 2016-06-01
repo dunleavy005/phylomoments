@@ -16,8 +16,8 @@ Imports:
     Rcpp (>= 0.12.4)
 Suggests:
     ape (>= 3.4),
-    knitr,
-    rmarkdown,
+    knitr (>= 1.12.3),
+    rmarkdown (>= 0.9.6),
     rphast (>= 1.6)
 LinkingTo: Rcpp, RcppArmadillo (>= 0.6.700.3.0)
 URL: https://github.com/dunleavy005/phylomoments

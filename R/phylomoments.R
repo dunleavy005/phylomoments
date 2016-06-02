@@ -11,7 +11,8 @@
 #' and continuous-time Markov chains (CTMCs) are also provided.
 #' 
 #' @section : Please see the vignettes for some examples of using the functions 
-#'   provided in this package.
+#'   provided in this package.  They can be accessed using 
+#'   \code{browseVignettes("phylomoments")}.
 #'   
 #' @author Amrit Dhar \email{adhar@@uw.edu}
 #'   
@@ -26,7 +27,7 @@
 #'   
 #' @docType package
 #' @name phylomoments
-#' 
+#'   
 #' @useDynLib phylomoments
 #' @importFrom Rcpp evalCpp
 NULL

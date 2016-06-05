@@ -161,27 +161,27 @@ const int& num_states, const int& num_term_nodes, const List& edge_moments, cons
   cube moments_second(tmp_vec.begin(), num_states, num_states, num_edges, false);
   
   // preparing for bottom-up tree traversal
-  mat downward_lik(2*num_term_nodes - 1, num_states, fill::zeros);
-  mat direction_lik(num_edges, num_states, fill::zeros);
-  mat V_list_first(num_edges, num_states, fill::zeros);
-  mat V_list_second(num_edges, num_states, fill::zeros);
-  mat W_list(num_edges, num_states, fill::zeros);
+  mat downward_lik(num_states, 2*num_term_nodes - 1, fill::zeros);
+  mat direction_lik(num_states, num_edges, fill::zeros);
+  mat V_list_first(num_states, num_edges, fill::zeros);
+  mat V_list_second(num_states, num_edges, fill::zeros);
+  mat W_list(num_states, num_edges, fill::zeros);
   
   // initializing downward partial likelihoods - tips
   if(tip_data.n_elem == 0) {
     // are we looking for prior moments?
-    downward_lik.rows(0, num_term_nodes - 1).ones();
+    downward_lik.cols(0, num_term_nodes - 1).ones();
   } else {
     // or posterior moments?
-    for (int i = 0; i < num_term_nodes; i++) downward_lik(i, tip_data(i)) = 1;
+    for (int i = 0; i < num_term_nodes; i++) downward_lik(tip_data(i), i) = 1;
   }
   
   for (int i = 0; i < num_edges; i += 2) {
     
     // calculating downward partial likelihoods - internal nodes & directional partial likelihoods - branches
-    direction_lik.row(i) = trans(prob_mat.slice(i) * downward_lik.row(edge_mat(i,1) - 1).t());
-    direction_lik.row(i+1) = trans(prob_mat.slice(i+1) * downward_lik.row(edge_mat(i+1,1) - 1).t());
-    downward_lik.row(edge_mat(i,0) - 1) = direction_lik.row(i) % direction_lik.row(i+1);
+    direction_lik.col(i) = prob_mat.slice(i) * downward_lik.col(edge_mat(i,1) - 1);
+    direction_lik.col(i+1) = prob_mat.slice(i+1) * downward_lik.col(edge_mat(i+1,1) - 1);
+    downward_lik.col(edge_mat(i,0) - 1) = direction_lik.col(i) % direction_lik.col(i+1);
     
     // calculating the V/W lists - branches
     
@@ -193,21 +193,20 @@ const int& num_states, const int& num_term_nodes, const List& edge_moments, cons
         uvec child_ind = find(edge_mat.col(0) == edge_mat(j,1));
         
         // calculating (internal) non-branch parts of V/W lists
-        V_list_first.row(j) = trans(prob_mat.slice(j) * trans((V_list_first.row(child_ind(0)) %
-        direction_lik.row(child_ind(1))) + (V_list_first.row(child_ind(1)) % direction_lik.row(child_ind(0)))));
+        V_list_first.col(j) = prob_mat.slice(j) * ((V_list_first.col(child_ind(0)) % direction_lik.col(child_ind(1))) +
+        (V_list_first.col(child_ind(1)) % direction_lik.col(child_ind(0))));
         
-        V_list_second.row(j) = trans(prob_mat.slice(j) * trans((V_list_second.row(child_ind(0)) %
-        direction_lik.row(child_ind(1))) + (V_list_second.row(child_ind(1)) % direction_lik.row(child_ind(0)))));
+        V_list_second.col(j) = prob_mat.slice(j) * ((V_list_second.col(child_ind(0)) % direction_lik.col(child_ind(1))) +
+        (V_list_second.col(child_ind(1)) % direction_lik.col(child_ind(0))));
         
-        W_list.row(j) = trans(prob_mat.slice(j) * trans(2 * (V_list_first.row(child_ind(0)) %
-        V_list_first.row(child_ind(1))) + (W_list.row(child_ind(0)) % direction_lik.row(child_ind(1))) +
-        (W_list.row(child_ind(1)) % direction_lik.row(child_ind(0)))));
+        W_list.col(j) = prob_mat.slice(j) * (2 * (V_list_first.col(child_ind(0)) % V_list_first.col(child_ind(1))) +
+        (W_list.col(child_ind(0)) % direction_lik.col(child_ind(1))) + (W_list.col(child_ind(1)) % direction_lik.col(child_ind(0))));
         
         // is the (internal) branch in the edge set?
         if(any(edge_set == j+1)) {
           
-          W_list.row(j) += trans(2 * moments_first.slice(j) * trans((V_list_first.row(child_ind(0)) % direction_lik.row(child_ind(1))) +
-          (V_list_first.row(child_ind(1)) % direction_lik.row(child_ind(0)))));
+          W_list.col(j) += 2 * moments_first.slice(j) * ((V_list_first.col(child_ind(0)) % direction_lik.col(child_ind(1))) +
+          (V_list_first.col(child_ind(1)) % direction_lik.col(child_ind(0))));
           
         }
         
@@ -216,9 +215,9 @@ const int& num_states, const int& num_term_nodes, const List& edge_moments, cons
       // is the branch in the edge set?
       if(any(edge_set == j+1)) {
         
-        V_list_first.row(j) += trans(moments_first.slice(j) * downward_lik.row(edge_mat(j,1) - 1).t());
+        V_list_first.col(j) += moments_first.slice(j) * downward_lik.col(edge_mat(j,1) - 1);
         
-        V_list_second.row(j) += trans(moments_second.slice(j) * downward_lik.row(edge_mat(j,1) - 1).t());
+        V_list_second.col(j) += moments_second.slice(j) * downward_lik.col(edge_mat(j,1) - 1);
         
       }
     }
@@ -251,33 +250,33 @@ const int& num_edges, const int& num_states, const int& num_term_nodes, const Li
   cube moments_second(tmp_vec.begin(), num_states, num_states, num_edges, false);
   
   // preparing for bottom-up tree traversal
-  mat downward_lik(2*num_term_nodes - 1, num_states, fill::zeros);
-  mat direction_lik(num_edges, num_states, fill::zeros);
-  mat V_list1_first(num_edges, num_states, fill::zeros);
-  mat V_list2_first(num_edges, num_states, fill::zeros);
-  mat V_list12_first(num_edges, num_states, fill::zeros);
-  mat V_list1_second(num_edges, num_states, fill::zeros);
-  mat V_list2_second(num_edges, num_states, fill::zeros);
-  mat V_list12_second(num_edges, num_states, fill::zeros);
-  mat W_list1(num_edges, num_states, fill::zeros);
-  mat W_list2(num_edges, num_states, fill::zeros);
-  mat W_list12(num_edges, num_states, fill::zeros);
+  mat downward_lik(num_states, 2*num_term_nodes - 1, fill::zeros);
+  mat direction_lik(num_states, num_edges, fill::zeros);
+  mat V_list1_first(num_states, num_edges, fill::zeros);
+  mat V_list2_first(num_states, num_edges, fill::zeros);
+  mat V_list12_first(num_states, num_edges, fill::zeros);
+  mat V_list1_second(num_states, num_edges, fill::zeros);
+  mat V_list2_second(num_states, num_edges, fill::zeros);
+  mat V_list12_second(num_states, num_edges, fill::zeros);
+  mat W_list1(num_states, num_edges, fill::zeros);
+  mat W_list2(num_states, num_edges, fill::zeros);
+  mat W_list12(num_states, num_edges, fill::zeros);
   
   // initializing downward partial likelihoods - tips
   if(tip_data.n_elem == 0) {
     // are we looking for prior moments?
-    downward_lik.rows(0, num_term_nodes - 1).ones();
+    downward_lik.cols(0, num_term_nodes - 1).ones();
   } else {
     // or posterior moments?
-    for (int i = 0; i < num_term_nodes; i++) downward_lik(i, tip_data(i)) = 1;
+    for (int i = 0; i < num_term_nodes; i++) downward_lik(tip_data(i), i) = 1;
   }
   
   for (int i = 0; i < num_edges; i += 2) {
     
     // calculating downward partial likelihoods - internal nodes & directional partial likelihoods - branches
-    direction_lik.row(i) = trans(prob_mat.slice(i) * downward_lik.row(edge_mat(i,1) - 1).t());
-    direction_lik.row(i+1) = trans(prob_mat.slice(i+1) * downward_lik.row(edge_mat(i+1,1) - 1).t());
-    downward_lik.row(edge_mat(i,0) - 1) = direction_lik.row(i) % direction_lik.row(i+1);
+    direction_lik.col(i) = prob_mat.slice(i) * downward_lik.col(edge_mat(i,1) - 1);
+    direction_lik.col(i+1) = prob_mat.slice(i+1) * downward_lik.col(edge_mat(i+1,1) - 1);
+    downward_lik.col(edge_mat(i,0) - 1) = direction_lik.col(i) % direction_lik.col(i+1);
     
     // calculating the V/W lists - branches
     
@@ -289,55 +288,53 @@ const int& num_edges, const int& num_states, const int& num_term_nodes, const Li
         uvec child_ind = find(edge_mat.col(0) == edge_mat(j,1));
         
         // calculating (internal) non-branch parts of V/W lists
-        V_list1_first.row(j) = trans(prob_mat.slice(j) * trans((V_list1_first.row(child_ind(0)) %
-        direction_lik.row(child_ind(1))) + (V_list1_first.row(child_ind(1)) % direction_lik.row(child_ind(0)))));
+        V_list1_first.col(j) = prob_mat.slice(j) * ((V_list1_first.col(child_ind(0)) % direction_lik.col(child_ind(1))) +
+        (V_list1_first.col(child_ind(1)) % direction_lik.col(child_ind(0))));
         
-        V_list2_first.row(j) = trans(prob_mat.slice(j) * trans((V_list2_first.row(child_ind(0)) %
-        direction_lik.row(child_ind(1))) + (V_list2_first.row(child_ind(1)) % direction_lik.row(child_ind(0)))));
+        V_list2_first.col(j) = prob_mat.slice(j) * ((V_list2_first.col(child_ind(0)) % direction_lik.col(child_ind(1))) +
+        (V_list2_first.col(child_ind(1)) % direction_lik.col(child_ind(0))));
         
-        V_list12_first.row(j) = trans(prob_mat.slice(j) * trans((V_list12_first.row(child_ind(0)) %
-        direction_lik.row(child_ind(1))) + (V_list12_first.row(child_ind(1)) % direction_lik.row(child_ind(0)))));
+        V_list12_first.col(j) = prob_mat.slice(j) * ((V_list12_first.col(child_ind(0)) % direction_lik.col(child_ind(1))) +
+        (V_list12_first.col(child_ind(1)) % direction_lik.col(child_ind(0))));
         
-        V_list1_second.row(j) = trans(prob_mat.slice(j) * trans((V_list1_second.row(child_ind(0)) %
-        direction_lik.row(child_ind(1))) + (V_list1_second.row(child_ind(1)) % direction_lik.row(child_ind(0)))));
+        V_list1_second.col(j) = prob_mat.slice(j) * ((V_list1_second.col(child_ind(0)) % direction_lik.col(child_ind(1))) +
+        (V_list1_second.col(child_ind(1)) % direction_lik.col(child_ind(0))));
         
-        V_list2_second.row(j) = trans(prob_mat.slice(j) * trans((V_list2_second.row(child_ind(0)) %
-        direction_lik.row(child_ind(1))) + (V_list2_second.row(child_ind(1)) % direction_lik.row(child_ind(0)))));
+        V_list2_second.col(j) = prob_mat.slice(j) * ((V_list2_second.col(child_ind(0)) % direction_lik.col(child_ind(1))) +
+        (V_list2_second.col(child_ind(1)) % direction_lik.col(child_ind(0))));
         
-        V_list12_second.row(j) = trans(prob_mat.slice(j) * trans((V_list12_second.row(child_ind(0)) %
-        direction_lik.row(child_ind(1))) + (V_list12_second.row(child_ind(1)) % direction_lik.row(child_ind(0)))));
+        V_list12_second.col(j) = prob_mat.slice(j) * ((V_list12_second.col(child_ind(0)) % direction_lik.col(child_ind(1))) +
+        (V_list12_second.col(child_ind(1)) % direction_lik.col(child_ind(0))));
         
-        W_list1.row(j) = trans(prob_mat.slice(j) * trans(2 * (V_list1_first.row(child_ind(0)) %
-        V_list1_first.row(child_ind(1))) + (W_list1.row(child_ind(0)) % direction_lik.row(child_ind(1))) +
-        (W_list1.row(child_ind(1)) % direction_lik.row(child_ind(0)))));
+        W_list1.col(j) = prob_mat.slice(j) * (2 * (V_list1_first.col(child_ind(0)) % V_list1_first.col(child_ind(1))) +
+        (W_list1.col(child_ind(0)) % direction_lik.col(child_ind(1))) + (W_list1.col(child_ind(1)) % direction_lik.col(child_ind(0))));
         
-        W_list2.row(j) = trans(prob_mat.slice(j) * trans(2 * (V_list2_first.row(child_ind(0)) %
-        V_list2_first.row(child_ind(1))) + (W_list2.row(child_ind(0)) % direction_lik.row(child_ind(1))) +
-        (W_list2.row(child_ind(1)) % direction_lik.row(child_ind(0)))));
+        W_list2.col(j) = prob_mat.slice(j) * (2 * (V_list2_first.col(child_ind(0)) % V_list2_first.col(child_ind(1))) +
+        (W_list2.col(child_ind(0)) % direction_lik.col(child_ind(1))) + (W_list2.col(child_ind(1)) % direction_lik.col(child_ind(0))));
         
-        W_list12.row(j) = trans(prob_mat.slice(j) * trans((V_list1_first.row(child_ind(0)) % V_list2_first.row(child_ind(1))) +
-        (V_list2_first.row(child_ind(0)) % V_list1_first.row(child_ind(1))) + (W_list12.row(child_ind(0)) %
-        direction_lik.row(child_ind(1))) + (W_list12.row(child_ind(1)) % direction_lik.row(child_ind(0)))));
+        W_list12.col(j) = prob_mat.slice(j) * ((V_list1_first.col(child_ind(0)) % V_list2_first.col(child_ind(1))) +
+        (V_list2_first.col(child_ind(0)) % V_list1_first.col(child_ind(1))) + (W_list12.col(child_ind(0)) % direction_lik.col(child_ind(1))) +
+        (W_list12.col(child_ind(1)) % direction_lik.col(child_ind(0))));
         
         // is the (internal) branch in the 1st edge set?
         if(any(edge_set1 == j+1)) {
           
-          W_list1.row(j) += trans(2 * moments_first.slice(j) * trans((V_list1_first.row(child_ind(0)) % direction_lik.row(child_ind(1))) +
-          (V_list1_first.row(child_ind(1)) % direction_lik.row(child_ind(0)))));
+          W_list1.col(j) += 2 * moments_first.slice(j) * ((V_list1_first.col(child_ind(0)) % direction_lik.col(child_ind(1))) +
+          (V_list1_first.col(child_ind(1)) % direction_lik.col(child_ind(0))));
           
-          W_list12.row(j) += trans(moments_first.slice(j) * trans((V_list2_first.row(child_ind(0)) % direction_lik.row(child_ind(1))) +
-          (V_list2_first.row(child_ind(1)) % direction_lik.row(child_ind(0)))));
+          W_list12.col(j) += moments_first.slice(j) * ((V_list2_first.col(child_ind(0)) % direction_lik.col(child_ind(1))) +
+          (V_list2_first.col(child_ind(1)) % direction_lik.col(child_ind(0))));
           
         }
         
         // is the (internal) branch in the 2nd edge set?
         if(any(edge_set2 == j+1)) {
           
-          W_list2.row(j) += trans(2 * moments_first.slice(j) * trans((V_list2_first.row(child_ind(0)) % direction_lik.row(child_ind(1))) +
-          (V_list2_first.row(child_ind(1)) % direction_lik.row(child_ind(0)))));
+          W_list2.col(j) += 2 * moments_first.slice(j) * ((V_list2_first.col(child_ind(0)) % direction_lik.col(child_ind(1))) +
+          (V_list2_first.col(child_ind(1)) % direction_lik.col(child_ind(0))));
           
-          W_list12.row(j) += trans(moments_first.slice(j) * trans((V_list1_first.row(child_ind(0)) % direction_lik.row(child_ind(1))) +
-          (V_list1_first.row(child_ind(1)) % direction_lik.row(child_ind(0)))));
+          W_list12.col(j) += moments_first.slice(j) * ((V_list1_first.col(child_ind(0)) % direction_lik.col(child_ind(1))) +
+          (V_list1_first.col(child_ind(1)) % direction_lik.col(child_ind(0))));
           
         }
         
@@ -346,27 +343,27 @@ const int& num_edges, const int& num_states, const int& num_term_nodes, const Li
       // is the branch in the 1st edge set?
       if(any(edge_set1 == j+1)) {
         
-        V_list1_first.row(j) += trans(moments_first.slice(j) * downward_lik.row(edge_mat(j,1) - 1).t());
+        V_list1_first.col(j) += moments_first.slice(j) * downward_lik.col(edge_mat(j,1) - 1);
         
-        V_list1_second.row(j) += trans(moments_second.slice(j) * downward_lik.row(edge_mat(j,1) - 1).t());
+        V_list1_second.col(j) += moments_second.slice(j) * downward_lik.col(edge_mat(j,1) - 1);
         
       }
       
       // is the branch in the 2nd edge set?
       if(any(edge_set2 == j+1)) {
         
-        V_list2_first.row(j) += trans(moments_first.slice(j) * downward_lik.row(edge_mat(j,1) - 1).t());
+        V_list2_first.col(j) += moments_first.slice(j) * downward_lik.col(edge_mat(j,1) - 1);
         
-        V_list2_second.row(j) += trans(moments_second.slice(j) * downward_lik.row(edge_mat(j,1) - 1).t());
+        V_list2_second.col(j) += moments_second.slice(j) * downward_lik.col(edge_mat(j,1) - 1);
         
       }
       
       // is the branch in both edge sets?
       if(any(edge_set1 == j+1) && any(edge_set2 == j+1)) {
         
-        V_list12_first.row(j) += trans(moments_first.slice(j) * downward_lik.row(edge_mat(j,1) - 1).t());
+        V_list12_first.col(j) += moments_first.slice(j) * downward_lik.col(edge_mat(j,1) - 1);
         
-        V_list12_second.row(j) += trans(moments_second.slice(j) * downward_lik.row(edge_mat(j,1) - 1).t());
+        V_list12_second.col(j) += moments_second.slice(j) * downward_lik.col(edge_mat(j,1) - 1);
         
       }
     }
@@ -396,50 +393,21 @@ mat phylo_likelihood_list(const imat& edge_mat, const int& num_edges, const int&
 const int& num_term_nodes, const cube& prob_mat, const ivec& tip_data) {
   
   // preparing for bottom-up tree traversal
-  mat downward_lik(2*num_term_nodes - 1, num_states, fill::zeros);
+  mat downward_lik(num_states, 2*num_term_nodes - 1, fill::zeros);
   
   // initializing downward partial likelihoods - tips
-  for (int i = 0; i < num_term_nodes; i++) downward_lik(i, tip_data(i)) = 1;
+  for (int i = 0; i < num_term_nodes; i++) downward_lik(tip_data(i), i) = 1;
   
   for (int i = 0; i < num_edges; i += 2) {
     
     // calculating downward partial likelihoods - internal nodes
-    rowvec left_lik = trans(prob_mat.slice(i) * downward_lik.row(edge_mat(i,1) - 1).t());
-    rowvec right_lik = trans(prob_mat.slice(i+1) * downward_lik.row(edge_mat(i+1,1) - 1).t());
-    downward_lik.row(edge_mat(i,0) - 1) = left_lik % right_lik;
+    vec left_lik = prob_mat.slice(i) * downward_lik.col(edge_mat(i,1) - 1);
+    vec right_lik = prob_mat.slice(i+1) * downward_lik.col(edge_mat(i+1,1) - 1);
+    downward_lik.col(edge_mat(i,0) - 1) = left_lik % right_lik;
     
   }
   
   return downward_lik;
-}
-
-
-
-
-
-
-// [[Rcpp::export]]
-double phylo_log_likelihood(const arma::imat& edge_mat, const arma::vec& edge_lengths, const arma::mat& rate_mat,
-const arma::vec& root_dist, const int& num_edges, const int& num_states, const int& num_term_nodes, const arma::imat& seq_data) {
-  
-  // initializing variables
-  int seq_ncols = seq_data.n_cols;
-  double log_lik = 0;
-  
-  // calculating probability matrices
-  cube prob_mat(num_states, num_states, num_edges, fill::zeros);
-  for (int i = 0; i < num_edges; i++) prob_mat.slice(i) = expmat(rate_mat * edge_lengths(i));
-  
-  for (int i = 0; i < seq_ncols; i++) {
-    
-    // calculating downward partial likelihoods
-    mat downward_lik_i = phylo_likelihood_list(edge_mat, num_edges, num_states, num_term_nodes, prob_mat, seq_data.col(i));
-    
-    log_lik += log(as_scalar(downward_lik_i.row(num_term_nodes) * root_dist));
-    
-  }
-  
-  return log_lik;
 }
 
 
@@ -465,7 +433,7 @@ const int& num_edges, const int& num_states, const int& num_term_nodes, const ar
   mat downward_lik = phylo_likelihood_list(edge_mat, num_edges, num_states, num_term_nodes, prob_mat, tip_data);
   
   // sampling root node states
-  vec state_prob = (downward_lik.row(num_term_nodes).t() % root_dist) / sum(downward_lik.row(num_term_nodes).t() % root_dist);
+  vec state_prob = (downward_lik.col(num_term_nodes) % root_dist) / dot(downward_lik.col(num_term_nodes), root_dist);
   
   IntegerVector sample_vec = sample(states, N, true, wrap(state_prob));
   node_states.row(num_term_nodes) = irowvec(sample_vec.begin(), sample_vec.size(), false);
@@ -498,8 +466,8 @@ const int& num_edges, const int& num_states, const int& num_term_nodes, const ar
         
         uvec col_ind = find(node_states.row(parent_ind) == m);
         
-        vec state_prob = trans(downward_lik.row(current_ind(0)) % prob_mat.slice(edge_ind(0)).row(m)) /
-        sum(downward_lik.row(current_ind(0)) % prob_mat.slice(edge_ind(0)).row(m));
+        vec state_prob = (downward_lik.col(current_ind(0)) % prob_mat.slice(edge_ind(0)).row(m).t()) /
+        dot(downward_lik.col(current_ind(0)), prob_mat.slice(edge_ind(0)).row(m).t());
         
         sample_vec = sample(states, col_ind.n_elem, true, wrap(state_prob));
         node_states(current_ind, col_ind) = irowvec(sample_vec.begin(), sample_vec.size(), false);
@@ -541,11 +509,11 @@ const int& num_edges, const int& num_states, const int& num_term_nodes, const Li
   root_edges_ind << num_edges - 1 << num_edges - 2;
   root_edges_ind_rev << num_edges - 2 << num_edges - 1;
   
-  double prior_mean = sum( (V_list_first.rows(root_edges_ind) % direction_lik.rows(root_edges_ind_rev)) * root_dist );
+  double prior_mean = sum( trans(V_list_first.cols(root_edges_ind) % direction_lik.cols(root_edges_ind_rev)) * root_dist );
   
-  double prior_var = sum( ( ((V_list_second.rows(root_edges_ind) + V_list_first.rows(root_edges_ind)) %
-  direction_lik.rows(root_edges_ind_rev)) + (W_list.rows(root_edges_ind) % direction_lik.rows(root_edges_ind_rev)) +
-  (V_list_first.rows(root_edges_ind) % V_list_first.rows(root_edges_ind_rev)) ) * root_dist ) - pow(prior_mean, 2);
+  double prior_var = sum( trans( ((V_list_second.cols(root_edges_ind) + V_list_first.cols(root_edges_ind)) %
+  direction_lik.cols(root_edges_ind_rev)) + (W_list.cols(root_edges_ind) % direction_lik.cols(root_edges_ind_rev)) +
+  (V_list_first.cols(root_edges_ind) % V_list_first.cols(root_edges_ind_rev)) ) * root_dist ) - pow(prior_mean, 2);
   
   return NumericVector::create(
     _["mean"] = prior_mean,
@@ -566,7 +534,8 @@ const int& num_edges, const int& num_states, const int& num_term_nodes, const Li
   uvec root_edges_ind, root_edges_ind_rev;
   root_edges_ind << num_edges - 1 << num_edges - 2;
   root_edges_ind_rev << num_edges - 2 << num_edges - 1;
-  double post_mean = 0, post_var = 0;
+  vec post_mean(seq_ncols, fill::zeros);
+  vec post_var(seq_ncols, fill::zeros);
   
   for (int i = 0; i < seq_ncols; i++) {
     
@@ -579,22 +548,19 @@ const int& num_edges, const int& num_states, const int& num_term_nodes, const Li
     mat V_list_second = phyl_list["V_list_second"];
     mat W_list = phyl_list["W_list"];
     
-    double post_mean_i = sum( (V_list_first.rows(root_edges_ind) % direction_lik.rows(root_edges_ind_rev)) * root_dist ) /
-    sum(downward_lik.row(num_term_nodes) * root_dist);
+    post_mean(i) = sum( trans(V_list_first.cols(root_edges_ind) % direction_lik.cols(root_edges_ind_rev)) * root_dist ) /
+    dot(downward_lik.col(num_term_nodes), root_dist);
     
-    post_mean += post_mean_i;
+    post_var(i) = sum( trans( ((V_list_second.cols(root_edges_ind) + V_list_first.cols(root_edges_ind)) %
+    direction_lik.cols(root_edges_ind_rev)) + (W_list.cols(root_edges_ind) % direction_lik.cols(root_edges_ind_rev)) +
+    (V_list_first.cols(root_edges_ind) % V_list_first.cols(root_edges_ind_rev)) ) * root_dist ) /
+    dot(downward_lik.col(num_term_nodes), root_dist) - pow(post_mean(i), 2);
     
-    double post_var_i = sum( ( ((V_list_second.rows(root_edges_ind) + V_list_first.rows(root_edges_ind)) %
-    direction_lik.rows(root_edges_ind_rev)) + (W_list.rows(root_edges_ind) % direction_lik.rows(root_edges_ind_rev)) +
-    (V_list_first.rows(root_edges_ind) % V_list_first.rows(root_edges_ind_rev)) ) * root_dist ) /
-    sum(downward_lik.row(num_term_nodes) * root_dist) - pow(post_mean_i, 2);
-    
-    post_var += post_var_i;
   }
   
   return NumericVector::create(
-    _["mean"] = post_mean,
-    _["var"] = post_var
+    _["mean"] = sum(post_mean),
+    _["var"] = sum(post_var)
     );
 }
 
@@ -799,21 +765,21 @@ const arma::vec& root_dist, const int& num_edges, const int& num_states, const i
   root_edges_ind << num_edges - 1 << num_edges - 2;
   root_edges_ind_rev << num_edges - 2 << num_edges - 1;
   
-  double prior_mean1 = sum( (V_list1_first.rows(root_edges_ind) % direction_lik.rows(root_edges_ind_rev)) * root_dist );
+  double prior_mean1 = sum( trans(V_list1_first.cols(root_edges_ind) % direction_lik.cols(root_edges_ind_rev)) * root_dist );
   
-  double prior_mean2 = sum( (V_list2_first.rows(root_edges_ind) % direction_lik.rows(root_edges_ind_rev)) * root_dist );
+  double prior_mean2 = sum( trans(V_list2_first.cols(root_edges_ind) % direction_lik.cols(root_edges_ind_rev)) * root_dist );
   
-  double prior_var1 = sum( ( ((V_list1_second.rows(root_edges_ind) + V_list1_first.rows(root_edges_ind)) %
-  direction_lik.rows(root_edges_ind_rev)) + (W_list1.rows(root_edges_ind) % direction_lik.rows(root_edges_ind_rev)) +
-  (V_list1_first.rows(root_edges_ind) % V_list1_first.rows(root_edges_ind_rev)) ) * root_dist ) - pow(prior_mean1, 2);
+  double prior_var1 = sum( trans( ((V_list1_second.cols(root_edges_ind) + V_list1_first.cols(root_edges_ind)) %
+  direction_lik.cols(root_edges_ind_rev)) + (W_list1.cols(root_edges_ind) % direction_lik.cols(root_edges_ind_rev)) +
+  (V_list1_first.cols(root_edges_ind) % V_list1_first.cols(root_edges_ind_rev)) ) * root_dist ) - pow(prior_mean1, 2);
   
-  double prior_var2 = sum( ( ((V_list2_second.rows(root_edges_ind) + V_list2_first.rows(root_edges_ind)) %
-  direction_lik.rows(root_edges_ind_rev)) + (W_list2.rows(root_edges_ind) % direction_lik.rows(root_edges_ind_rev)) +
-  (V_list2_first.rows(root_edges_ind) % V_list2_first.rows(root_edges_ind_rev)) ) * root_dist ) - pow(prior_mean2, 2);
+  double prior_var2 = sum( trans( ((V_list2_second.cols(root_edges_ind) + V_list2_first.cols(root_edges_ind)) %
+  direction_lik.cols(root_edges_ind_rev)) + (W_list2.cols(root_edges_ind) % direction_lik.cols(root_edges_ind_rev)) +
+  (V_list2_first.cols(root_edges_ind) % V_list2_first.cols(root_edges_ind_rev)) ) * root_dist ) - pow(prior_mean2, 2);
   
-  double prior_cov = sum( ( ((V_list12_second.rows(root_edges_ind) + V_list12_first.rows(root_edges_ind)) %
-  direction_lik.rows(root_edges_ind_rev)) + (W_list12.rows(root_edges_ind) % direction_lik.rows(root_edges_ind_rev)) +
-  (V_list1_first.rows(root_edges_ind) % V_list2_first.rows(root_edges_ind_rev)) ) * root_dist ) - prior_mean1 * prior_mean2;
+  double prior_cov = sum( trans( ((V_list12_second.cols(root_edges_ind) + V_list12_first.cols(root_edges_ind)) %
+  direction_lik.cols(root_edges_ind_rev)) + (W_list12.cols(root_edges_ind) % direction_lik.cols(root_edges_ind_rev)) +
+  (V_list1_first.cols(root_edges_ind) % V_list2_first.cols(root_edges_ind_rev)) ) * root_dist ) - prior_mean1 * prior_mean2;
   
   return NumericVector::create(
     _["mean1"] = prior_mean1,
@@ -837,7 +803,11 @@ const int& num_edges, const int& num_states, const int& num_term_nodes, const Li
   uvec root_edges_ind, root_edges_ind_rev;
   root_edges_ind << num_edges - 1 << num_edges - 2;
   root_edges_ind_rev << num_edges - 2 << num_edges - 1;
-  double post_mean1 = 0, post_mean2 = 0, post_var1 = 0, post_var2 = 0, post_cov = 0;
+  vec post_mean1(seq_ncols, fill::zeros);
+  vec post_mean2(seq_ncols, fill::zeros);
+  vec post_var1(seq_ncols, fill::zeros);
+  vec post_var2(seq_ncols, fill::zeros);
+  vec post_cov(seq_ncols, fill::zeros);
   
   for (int i = 0; i < seq_ncols; i++) {
     
@@ -856,44 +826,34 @@ const int& num_edges, const int& num_states, const int& num_term_nodes, const Li
     mat W_list2 = phyl_list["W_list2"];
     mat W_list12 = phyl_list["W_list12"];
     
-    double post_mean1_i = sum( (V_list1_first.rows(root_edges_ind) % direction_lik.rows(root_edges_ind_rev)) * root_dist ) /
-    sum(downward_lik.row(num_term_nodes) * root_dist);
+    post_mean1(i) = sum( trans(V_list1_first.cols(root_edges_ind) % direction_lik.cols(root_edges_ind_rev)) * root_dist ) /
+    dot(downward_lik.col(num_term_nodes), root_dist);
     
-    post_mean1 += post_mean1_i;
+    post_mean2(i) = sum( trans(V_list2_first.cols(root_edges_ind) % direction_lik.cols(root_edges_ind_rev)) * root_dist ) /
+    dot(downward_lik.col(num_term_nodes), root_dist);
     
-    double post_mean2_i = sum( (V_list2_first.rows(root_edges_ind) % direction_lik.rows(root_edges_ind_rev)) * root_dist ) /
-    sum(downward_lik.row(num_term_nodes) * root_dist);
+    post_var1(i) = sum( trans( ((V_list1_second.cols(root_edges_ind) + V_list1_first.cols(root_edges_ind)) %
+    direction_lik.cols(root_edges_ind_rev)) + (W_list1.cols(root_edges_ind) % direction_lik.cols(root_edges_ind_rev)) +
+    (V_list1_first.cols(root_edges_ind) % V_list1_first.cols(root_edges_ind_rev)) ) * root_dist ) /
+    dot(downward_lik.col(num_term_nodes), root_dist) - pow(post_mean1(i), 2);
     
-    post_mean2 += post_mean2_i;
+    post_var2(i) = sum( trans( ((V_list2_second.cols(root_edges_ind) + V_list2_first.cols(root_edges_ind)) %
+    direction_lik.cols(root_edges_ind_rev)) + (W_list2.cols(root_edges_ind) % direction_lik.cols(root_edges_ind_rev)) +
+    (V_list2_first.cols(root_edges_ind) % V_list2_first.cols(root_edges_ind_rev)) ) * root_dist ) /
+    dot(downward_lik.col(num_term_nodes), root_dist) - pow(post_mean2(i), 2);
     
-    double post_var1_i = sum( ( ((V_list1_second.rows(root_edges_ind) + V_list1_first.rows(root_edges_ind)) %
-    direction_lik.rows(root_edges_ind_rev)) + (W_list1.rows(root_edges_ind) % direction_lik.rows(root_edges_ind_rev)) +
-    (V_list1_first.rows(root_edges_ind) % V_list1_first.rows(root_edges_ind_rev)) ) * root_dist ) /
-    sum(downward_lik.row(num_term_nodes) * root_dist) - pow(post_mean1_i, 2);
-    
-    post_var1 += post_var1_i;
-    
-    double post_var2_i = sum( ( ((V_list2_second.rows(root_edges_ind) + V_list2_first.rows(root_edges_ind)) %
-    direction_lik.rows(root_edges_ind_rev)) + (W_list2.rows(root_edges_ind) % direction_lik.rows(root_edges_ind_rev)) +
-    (V_list2_first.rows(root_edges_ind) % V_list2_first.rows(root_edges_ind_rev)) ) * root_dist ) /
-    sum(downward_lik.row(num_term_nodes) * root_dist) - pow(post_mean2_i, 2);
-    
-    post_var2 += post_var2_i;
-    
-    double post_cov_i = sum( ( ((V_list12_second.rows(root_edges_ind) + V_list12_first.rows(root_edges_ind)) %
-    direction_lik.rows(root_edges_ind_rev)) + (W_list12.rows(root_edges_ind) % direction_lik.rows(root_edges_ind_rev)) +
-    (V_list1_first.rows(root_edges_ind) % V_list2_first.rows(root_edges_ind_rev)) ) * root_dist ) /
-    sum(downward_lik.row(num_term_nodes) * root_dist) - post_mean1_i * post_mean2_i;
-    
-    post_cov += post_cov_i;
+    post_cov(i) = sum( trans( ((V_list12_second.cols(root_edges_ind) + V_list12_first.cols(root_edges_ind)) %
+    direction_lik.cols(root_edges_ind_rev)) + (W_list12.cols(root_edges_ind) % direction_lik.cols(root_edges_ind_rev)) +
+    (V_list1_first.cols(root_edges_ind) % V_list2_first.cols(root_edges_ind_rev)) ) * root_dist ) /
+    dot(downward_lik.col(num_term_nodes), root_dist) - post_mean1(i) * post_mean2(i);
   }
   
   return NumericVector::create(
-    _["mean1"] = post_mean1,
-    _["mean2"] = post_mean2,
-    _["var1"] = post_var1,
-    _["var2"] = post_var2,
-    _["cov"] = post_cov
+    _["mean1"] = sum(post_mean1),
+    _["mean2"] = sum(post_mean2),
+    _["var1"] = sum(post_var1),
+    _["var2"] = sum(post_var2),
+    _["cov"] = sum(post_cov)
     );
 }
 

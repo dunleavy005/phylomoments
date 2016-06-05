@@ -9,10 +9,6 @@ ctmc_sim <- function(t, rate_mat, init_state) {
     .Call('phylomoments_ctmc_sim', PACKAGE = 'phylomoments', t, rate_mat, init_state)
 }
 
-phylo_log_likelihood <- function(edge_mat, edge_lengths, rate_mat, root_dist, num_edges, num_states, num_term_nodes, seq_data) {
-    .Call('phylomoments_phylo_log_likelihood', PACKAGE = 'phylomoments', edge_mat, edge_lengths, rate_mat, root_dist, num_edges, num_states, num_term_nodes, seq_data)
-}
-
 int_states_sim <- function(edge_mat, edge_lengths, rate_mat, root_dist, num_edges, num_states, num_term_nodes, tip_data, N) {
     .Call('phylomoments_int_states_sim', PACKAGE = 'phylomoments', edge_mat, edge_lengths, rate_mat, root_dist, num_edges, num_states, num_term_nodes, tip_data, N)
 }

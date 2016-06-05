@@ -104,45 +104,6 @@ moments.ctmcjumps = function(t, rate.mat, label.mat, root.dist = NULL, scale = F
 
 
 
-
-phylo.log.likelihood = function(rho, tree, rate.mat, root.dist, scale = FALSE, states = c("a","c","g","t"), seq.data) {
-  
-  if(!inherits(tree, "phylo"))
-    stop("Tree object must be of class 'phylo'", call. = FALSE)
-  
-  if(attr(tree, "order") != "pruningwise")
-    stop("Edge matrix must be in 'pruningwise' order", call. = FALSE)
-  
-  if(!all(seq.data %in% states))
-    stop("Elements of 'seq.data' are not consistent with 'states'", call. = FALSE)
-  
-  if(any(dim(rate.mat) != length(root.dist)))
-    stop("Dimensions of 'rate.mat' aren't compatible with 'root.dist'", call. = FALSE)
-  
-  if(any(dim(rate.mat) != length(states)))
-    stop("Dimensions of 'rate.mat' aren't compatible with 'states'", call. = FALSE)
-  
-  edge.mat = tree$edge
-  edge.lengths = rho * tree$edge.length
-  if(scale == TRUE) rate.mat = scale.rate.mat(rate.mat, root.dist)
-  num.edges = nrow(edge.mat)
-  num.states = nrow(rate.mat)
-  num.term.nodes = length(tree$tip.label)
-  seq.data = matrix(match(seq.data, states) - 1, ncol = ncol(seq.data), byrow = FALSE)
-  
-  if(nrow(seq.data) != num.term.nodes)
-    stop("'seq.data' doesn't have the correct number of rows", call. = FALSE)
-  
-  phylo_log_likelihood(edge.mat, edge.lengths, rate.mat, root.dist,
-                       num.edges, num.states, num.term.nodes, seq.data)
-}
-
-
-
-
-
-
-
 #' Simulation of a CTMC path.
 #' 
 #' Generates a realization of a continuous-time Markov chain (CTMC).

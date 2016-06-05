@@ -34,24 +34,6 @@ BEGIN_RCPP
     return __result;
 END_RCPP
 }
-// phylo_log_likelihood
-double phylo_log_likelihood(const arma::imat& edge_mat, const arma::vec& edge_lengths, const arma::mat& rate_mat, const arma::vec& root_dist, const int& num_edges, const int& num_states, const int& num_term_nodes, const arma::imat& seq_data);
-RcppExport SEXP phylomoments_phylo_log_likelihood(SEXP edge_matSEXP, SEXP edge_lengthsSEXP, SEXP rate_matSEXP, SEXP root_distSEXP, SEXP num_edgesSEXP, SEXP num_statesSEXP, SEXP num_term_nodesSEXP, SEXP seq_dataSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< const arma::imat& >::type edge_mat(edge_matSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type edge_lengths(edge_lengthsSEXP);
-    Rcpp::traits::input_parameter< const arma::mat& >::type rate_mat(rate_matSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type root_dist(root_distSEXP);
-    Rcpp::traits::input_parameter< const int& >::type num_edges(num_edgesSEXP);
-    Rcpp::traits::input_parameter< const int& >::type num_states(num_statesSEXP);
-    Rcpp::traits::input_parameter< const int& >::type num_term_nodes(num_term_nodesSEXP);
-    Rcpp::traits::input_parameter< const arma::imat& >::type seq_data(seq_dataSEXP);
-    __result = Rcpp::wrap(phylo_log_likelihood(edge_mat, edge_lengths, rate_mat, root_dist, num_edges, num_states, num_term_nodes, seq_data));
-    return __result;
-END_RCPP
-}
 // int_states_sim
 arma::imat int_states_sim(const arma::imat& edge_mat, const arma::vec& edge_lengths, const arma::mat& rate_mat, const arma::vec& root_dist, const int& num_edges, const int& num_states, const int& num_term_nodes, const arma::ivec& tip_data, const int& N);
 RcppExport SEXP phylomoments_int_states_sim(SEXP edge_matSEXP, SEXP edge_lengthsSEXP, SEXP rate_matSEXP, SEXP root_distSEXP, SEXP num_edgesSEXP, SEXP num_statesSEXP, SEXP num_term_nodesSEXP, SEXP tip_dataSEXP, SEXP NSEXP) {

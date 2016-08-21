@@ -1,5 +1,7 @@
 # phylomoments
 
+[![Travis-CI Build Status](https://travis-ci.org/dunleavy005/phylomoments.svg?branch=master)](https://travis-ci.org/dunleavy005/phylomoments)
+
 This R package implements a simulation-free dynamic programming algorithm for 
 calculating higher-order moments of stochastic mapping summaries on a 
 phylogeny. Utility functions related to simulation-based stochastic mapping 

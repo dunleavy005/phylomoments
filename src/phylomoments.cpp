@@ -10,8 +10,8 @@ using namespace arma;
 
 
 // [[Rcpp::export]]
-List moments_ctmcjumps(const arma::vec& edge_lengths, const arma::mat& rate_mat,
-const arma::imat& label_mat, const int& num_edges, const int& num_states) {
+List moments_ctmcjumps(arma::vec& edge_lengths, arma::mat& rate_mat,
+                       arma::imat& label_mat, int num_edges, int num_states) {
   
   // diagonalizing rate matrix
   cx_vec cx_rate_eigval;
@@ -28,10 +28,11 @@ const arma::imat& label_mat, const int& num_edges, const int& num_states) {
   cube spectr_mat(num_states, num_states, num_states, fill::zeros);
   mat E_mat = zeros<mat>(num_states, num_states);
   mat rate_mat_L = rate_mat % label_mat;
+  
   for (int i = 0; i < num_states; i++) {
     E_mat(i,i) = 1;
     spectr_mat.slice(i) = rate_eigvec * E_mat * inv(rate_eigvec);
-    E_mat.zeros();
+    E_mat(i,i) = 0;
   }
   
   cube moment_first(num_states, num_states, num_edges, fill::zeros);
@@ -64,12 +65,12 @@ const arma::imat& label_mat, const int& num_edges, const int& num_states) {
           
           if(fabs(rate_eigval(i) - rate_eigval(j)) < pow(10,-5) && fabs(rate_eigval(j) - rate_eigval(k)) < pow(10,-5)) {
             
-            aux_int = (pow(edge_lengths(t),2)/2) * exp(rate_eigval(i) * edge_lengths(t));
+            aux_int = (pow(edge_lengths(t), 2) / 2) * exp(rate_eigval(i) * edge_lengths(t));
             
           } else if(fabs(rate_eigval(i) - rate_eigval(j)) < pow(10,-5) && fabs(rate_eigval(j) - rate_eigval(k)) >= pow(10,-5)) {
             
             aux_int = ((edge_lengths(t) * exp(rate_eigval(j) * edge_lengths(t))) / (rate_eigval(j) - rate_eigval(k))) -
-            ((exp(rate_eigval(j) * edge_lengths(t)) - exp(rate_eigval(k) * edge_lengths(t))) / (pow(rate_eigval(j) - rate_eigval(k),2)));
+            ((exp(rate_eigval(j) * edge_lengths(t)) - exp(rate_eigval(k) * edge_lengths(t))) / (pow(rate_eigval(j) - rate_eigval(k), 2)));
             
           } else if(fabs(rate_eigval(i) - rate_eigval(j)) >= pow(10,-5) && fabs(rate_eigval(i) - rate_eigval(k)) < pow(10,-5)) {
             
@@ -98,7 +99,7 @@ const arma::imat& label_mat, const int& num_edges, const int& num_states) {
     _["zeroth"] = moment_zeroth,
     _["first"] = moment_first,
     _["second"] = moment_second
-    );
+  );
 }
 
 
@@ -106,7 +107,7 @@ const arma::imat& label_mat, const int& num_edges, const int& num_states) {
 
 
 // [[Rcpp::export]]
-NumericMatrix ctmc_sim(const double& t, const arma::mat& rate_mat, const int& init_state) {
+NumericMatrix ctmc_sim(double t, arma::mat& rate_mat, int init_state) {
   
   // initializing variables
   IntegerVector states = seq_len(rate_mat.n_rows) - 1;    
@@ -116,7 +117,6 @@ NumericMatrix ctmc_sim(const double& t, const arma::mat& rate_mat, const int& in
   NumericVector time_vec = NumericVector::create(time);
   
   while (time <= t) {
-    
     // simulating time until moving to a new state
     double new_time = rexp(1, -rate_mat(new_state, new_state))[0];
     
@@ -147,8 +147,8 @@ NumericMatrix ctmc_sim(const double& t, const arma::mat& rate_mat, const int& in
 
 
 
-List stoch_mapping_lists(const arma::imat& edge_mat, const arma::ivec& edge_set, const int& num_edges,
-const int& num_states, const int& num_term_nodes, const List& edge_moments, const arma::ivec& tip_data) {
+List stoch_mapping_lists(imat& edge_mat, ivec& edge_set, int num_edges, int num_states,
+                         int num_term_nodes, List& edge_moments, ivec& tip_data) {
   
   // storing probability matrices & restricted factorial moment matrices - labeled markov jumps
   NumericVector tmp_vec;
@@ -214,11 +214,8 @@ const int& num_states, const int& num_term_nodes, const List& edge_moments, cons
       
       // is the branch in the edge set?
       if(any(edge_set == j+1)) {
-        
         V_list_first.col(j) += moments_first.slice(j) * downward_lik.col(edge_mat(j,1) - 1);
-        
         V_list_second.col(j) += moments_second.slice(j) * downward_lik.col(edge_mat(j,1) - 1);
-        
       }
     }
   }
@@ -229,15 +226,15 @@ const int& num_states, const int& num_term_nodes, const List& edge_moments, cons
     _["V_list_first"] = V_list_first,
     _["V_list_second"] = V_list_second,
     _["W_list"] = W_list
-    );
+  );
 }
 
 
 
 
 
-List joint_stoch_mapping_lists(const arma::imat& edge_mat, const arma::ivec& edge_set1, const arma::ivec& edge_set2,
-const int& num_edges, const int& num_states, const int& num_term_nodes, const List& edge_moments, const arma::ivec& tip_data) {
+List joint_stoch_mapping_lists(imat& edge_mat, ivec& edge_set1, ivec& edge_set2, int num_edges,
+                               int num_states, int num_term_nodes, List& edge_moments, ivec& tip_data) {
   
   // storing probability matrices & restricted factorial moment matrices - labeled markov jumps
   NumericVector tmp_vec;
@@ -342,29 +339,20 @@ const int& num_edges, const int& num_states, const int& num_term_nodes, const Li
       
       // is the branch in the 1st edge set?
       if(any(edge_set1 == j+1)) {
-        
         V_list1_first.col(j) += moments_first.slice(j) * downward_lik.col(edge_mat(j,1) - 1);
-        
         V_list1_second.col(j) += moments_second.slice(j) * downward_lik.col(edge_mat(j,1) - 1);
-        
       }
       
       // is the branch in the 2nd edge set?
       if(any(edge_set2 == j+1)) {
-        
         V_list2_first.col(j) += moments_first.slice(j) * downward_lik.col(edge_mat(j,1) - 1);
-        
         V_list2_second.col(j) += moments_second.slice(j) * downward_lik.col(edge_mat(j,1) - 1);
-        
       }
       
       // is the branch in both edge sets?
       if(any(edge_set1 == j+1) && any(edge_set2 == j+1)) {
-        
         V_list12_first.col(j) += moments_first.slice(j) * downward_lik.col(edge_mat(j,1) - 1);
-        
         V_list12_second.col(j) += moments_second.slice(j) * downward_lik.col(edge_mat(j,1) - 1);
-        
       }
     }
   }
@@ -381,7 +369,7 @@ const int& num_edges, const int& num_states, const int& num_term_nodes, const Li
     _["W_list1"] = W_list1,
     _["W_list2"] = W_list2,
     _["W_list12"] = W_list12
-    );
+  );
 }
 
 
@@ -389,8 +377,8 @@ const int& num_edges, const int& num_states, const int& num_term_nodes, const Li
 
 
 
-mat phylo_likelihood_list(const imat& edge_mat, const int& num_edges, const int& num_states,
-const int& num_term_nodes, const cube& prob_mat, const ivec& tip_data) {
+mat phylo_likelihood_list(imat& edge_mat, int num_edges, int num_states,
+                          int num_term_nodes, cube& prob_mat, ivec& tip_data) {
   
   // preparing for bottom-up tree traversal
   mat downward_lik(num_states, 2*num_term_nodes - 1, fill::zeros);
@@ -399,12 +387,10 @@ const int& num_term_nodes, const cube& prob_mat, const ivec& tip_data) {
   for (int i = 0; i < num_term_nodes; i++) downward_lik(tip_data(i), i) = 1;
   
   for (int i = 0; i < num_edges; i += 2) {
-    
     // calculating downward partial likelihoods - internal nodes
     vec left_lik = prob_mat.slice(i) * downward_lik.col(edge_mat(i,1) - 1);
     vec right_lik = prob_mat.slice(i+1) * downward_lik.col(edge_mat(i+1,1) - 1);
     downward_lik.col(edge_mat(i,0) - 1) = left_lik % right_lik;
-    
   }
   
   return downward_lik;
@@ -416,8 +402,8 @@ const int& num_term_nodes, const cube& prob_mat, const ivec& tip_data) {
 
 
 // [[Rcpp::export]]
-arma::imat int_states_sim(const arma::imat& edge_mat, const arma::vec& edge_lengths, const arma::mat& rate_mat, const arma::vec& root_dist,
-const int& num_edges, const int& num_states, const int& num_term_nodes, const arma::ivec& tip_data, const int& N) {
+arma::imat int_states_sim(arma::imat& edge_mat, arma::vec& edge_lengths, arma::mat& rate_mat, arma::vec& root_dist,
+                          int num_edges, int num_states, int num_term_nodes, arma::ivec& tip_data, int N) {
   
   // initializing variables
   int num_to_sample = num_term_nodes - 1;
@@ -492,8 +478,8 @@ const int& num_edges, const int& num_states, const int& num_term_nodes, const ar
 
 
 // [[Rcpp::export]]
-NumericVector prior_moments_phylojumps(const arma::imat& edge_mat, const arma::ivec& edge_set, const arma::vec& root_dist,
-const int& num_edges, const int& num_states, const int& num_term_nodes, const List& edge_moments) {
+NumericVector prior_moments_phylojumps(arma::imat& edge_mat, arma::ivec& edge_set, arma::vec& root_dist,
+                                       int num_edges, int num_states, int num_term_nodes, List& edge_moments) {
   
   // calculating/storing stochastic mapping lists for prior mean/variance calculations
   ivec fake_tips = zeros<ivec>(0);
@@ -518,7 +504,7 @@ const int& num_edges, const int& num_states, const int& num_term_nodes, const Li
   return NumericVector::create(
     _["mean"] = prior_mean,
     _["var"] = prior_var
-    );
+  );
 }
 
 
@@ -527,8 +513,8 @@ const int& num_edges, const int& num_states, const int& num_term_nodes, const Li
 
 
 // [[Rcpp::export]]
-NumericVector post_moments_phylojumps(const arma::imat& edge_mat, const arma::ivec& edge_set, const arma::vec& root_dist,
-const int& num_edges, const int& num_states, const int& num_term_nodes, const List& edge_moments, const arma::imat& seq_data) {
+NumericVector post_moments_phylojumps(arma::imat& edge_mat, arma::ivec& edge_set, arma::vec& root_dist, int num_edges,
+                                      int num_states, int num_term_nodes, List& edge_moments, arma::imat& seq_data) {
   
   int seq_ncols = seq_data.n_cols;
   uvec root_edges_ind, root_edges_ind_rev;
@@ -538,9 +524,9 @@ const int& num_edges, const int& num_states, const int& num_term_nodes, const Li
   vec post_var(seq_ncols, fill::zeros);
   
   for (int i = 0; i < seq_ncols; i++) {
-    
-    // calculating/storing stochastic mapping lists for posterior mean/variance calculations  
-    List phyl_list = stoch_mapping_lists(edge_mat, edge_set, num_edges, num_states, num_term_nodes, edge_moments, seq_data.col(i));
+    // calculating/storing stochastic mapping lists for posterior mean/variance calculations
+    ivec tip_data = seq_data.col(i);
+    List phyl_list = stoch_mapping_lists(edge_mat, edge_set, num_edges, num_states, num_term_nodes, edge_moments, tip_data);
     
     mat downward_lik = phyl_list["downward_lik"];
     mat direction_lik = phyl_list["direction_lik"];
@@ -555,13 +541,12 @@ const int& num_edges, const int& num_states, const int& num_term_nodes, const Li
     direction_lik.cols(root_edges_ind_rev)) + (W_list.cols(root_edges_ind) % direction_lik.cols(root_edges_ind_rev)) +
     (V_list_first.cols(root_edges_ind) % V_list_first.cols(root_edges_ind_rev)) ) * root_dist ) /
     dot(downward_lik.col(num_term_nodes), root_dist) - pow(post_mean(i), 2);
-    
   }
   
   return NumericVector::create(
     _["mean"] = sum(post_mean),
     _["var"] = sum(post_var)
-    );
+  );
 }
 
 
@@ -570,7 +555,7 @@ const int& num_edges, const int& num_states, const int& num_term_nodes, const Li
 
 
 // [[Rcpp::export]]
-arma::ivec find_subtree_edges(const int& node, const arma::imat& edge_mat) {
+arma::ivec find_subtree_edges(int node, arma::imat& edge_mat) {
   
   // finding branch above "node"
   int branch_above = as_scalar(find(edge_mat.col(1) == node)) + 1;
@@ -589,9 +574,10 @@ arma::ivec find_subtree_edges(const int& node, const arma::imat& edge_mat) {
   ivec node_children = edge_mat(node_children_ind, j);
   
   return join_cols(
-    join_cols(find_subtree_edges(node_children(0), edge_mat),
-    find_subtree_edges(node_children(1), edge_mat)), outp
-    );
+    join_cols(
+      find_subtree_edges(node_children(0), edge_mat),
+      find_subtree_edges(node_children(1), edge_mat)
+    ), outp);
 }
 
 
@@ -600,8 +586,8 @@ arma::ivec find_subtree_edges(const int& node, const arma::imat& edge_mat) {
 
 
 // [[Rcpp::export]]
-arma::imat tips_sim(const arma::imat& edge_mat, const arma::vec& edge_lengths, const arma::mat& rate_mat,
-const arma::vec& root_dist, const int& num_edges, const int& num_states, const int& num_term_nodes, const int& N) {
+arma::imat tips_sim(arma::imat& edge_mat, arma::vec& edge_lengths, arma::mat& rate_mat,
+                    arma::vec& root_dist, int num_edges, int num_states, int num_term_nodes, int N) {
   
   // initializing variables
   IntegerVector states = seq_len(num_states) - 1;
@@ -644,8 +630,8 @@ const arma::vec& root_dist, const int& num_edges, const int& num_states, const i
 
 
 // [[Rcpp::export]]
-arma::imat phylojumps_sim(const arma::imat& edge_mat, const arma::vec& edge_lengths, const arma::mat& rate_mat, const arma::vec& root_dist,
-const int& num_edges, const int& num_states, const int& num_term_nodes, const arma::imat& seq_data, const int& N) {
+arma::imat phylojumps_sim(arma::imat& edge_mat, arma::vec& edge_lengths, arma::mat& rate_mat, arma::vec& root_dist,
+                          int num_edges, int num_states, int num_term_nodes, arma::imat& seq_data, int N) {
   
   // initializing variables
   IntegerVector states = seq_len(num_states) - 1;
@@ -715,8 +701,9 @@ const int& num_edges, const int& num_states, const int& num_term_nodes, const ar
 
 
 // [[Rcpp::export]]
-NumericVector postmean_moments_phylojumps(const arma::imat& edge_mat, const arma::vec& edge_lengths, const arma::mat& rate_mat, const arma::ivec& edge_set,
-const arma::vec& root_dist, const int& num_edges, const int& num_states, const int& num_term_nodes, const List& edge_moments, const int& N) {
+NumericVector postmean_moments_phylojumps(arma::imat& edge_mat, arma::vec& edge_lengths, arma::mat& rate_mat,
+                                          arma::ivec& edge_set, arma::vec& root_dist, int num_edges,
+                                          int num_states, int num_term_nodes, List& edge_moments, int N) {
   
   // calculating prior moments
   NumericVector prior_moments = prior_moments_phylojumps(edge_mat, edge_set, root_dist, num_edges, num_states, num_term_nodes, edge_moments);
@@ -733,7 +720,7 @@ const arma::vec& root_dist, const int& num_edges, const int& num_states, const i
   return NumericVector::create(
     _["mean"] = prior_mean,
     _["var"] = prior_var - mean_post_var
-    );
+  );
 }
 
 
@@ -742,8 +729,9 @@ const arma::vec& root_dist, const int& num_edges, const int& num_states, const i
 
 
 // [[Rcpp::export]]
-NumericVector joint_prior_moments_phylojumps(const arma::imat& edge_mat, const arma::ivec& edge_set1, const arma::ivec& edge_set2,
-const arma::vec& root_dist, const int& num_edges, const int& num_states, const int& num_term_nodes, const List& edge_moments) {
+NumericVector joint_prior_moments_phylojumps(arma::imat& edge_mat, arma::ivec& edge_set1,
+                                             arma::ivec& edge_set2, arma::vec& root_dist, int num_edges,
+                                             int num_states, int num_term_nodes, List& edge_moments) {
   
   // calculating/storing stochastic mapping lists for prior mean/variance/covariance calculations
   ivec fake_tips = zeros<ivec>(0);
@@ -787,7 +775,7 @@ const arma::vec& root_dist, const int& num_edges, const int& num_states, const i
     _["var1"] = prior_var1,
     _["var2"] = prior_var2,
     _["cov"] = prior_cov
-    );
+  );
 }
 
 
@@ -796,8 +784,9 @@ const arma::vec& root_dist, const int& num_edges, const int& num_states, const i
 
 
 // [[Rcpp::export]]
-NumericVector joint_post_moments_phylojumps(const arma::imat& edge_mat, const arma::ivec& edge_set1, const arma::ivec& edge_set2, const arma::vec& root_dist,
-const int& num_edges, const int& num_states, const int& num_term_nodes, const List& edge_moments, const arma::imat& seq_data) {
+NumericVector joint_post_moments_phylojumps(arma::imat& edge_mat, arma::ivec& edge_set1, arma::ivec& edge_set2,
+                                            arma::vec& root_dist, int num_edges, int num_states,
+                                            int num_term_nodes, List& edge_moments, arma::imat& seq_data) {
   
   int seq_ncols = seq_data.n_cols;
   uvec root_edges_ind, root_edges_ind_rev;
@@ -810,9 +799,10 @@ const int& num_edges, const int& num_states, const int& num_term_nodes, const Li
   vec post_cov(seq_ncols, fill::zeros);
   
   for (int i = 0; i < seq_ncols; i++) {
-    
-    // calculating/storing stochastic mapping lists for posterior mean/variance/covariance calculations  
-    List phyl_list = joint_stoch_mapping_lists(edge_mat, edge_set1, edge_set2, num_edges, num_states, num_term_nodes, edge_moments, seq_data.col(i));
+    // calculating/storing stochastic mapping lists for posterior mean/variance/covariance calculations
+    ivec tip_data = seq_data.col(i);
+    List phyl_list = joint_stoch_mapping_lists(edge_mat, edge_set1, edge_set2,
+    num_edges, num_states, num_term_nodes, edge_moments, tip_data);
     
     mat downward_lik = phyl_list["downward_lik"];
     mat direction_lik = phyl_list["direction_lik"];
@@ -854,7 +844,7 @@ const int& num_edges, const int& num_states, const int& num_term_nodes, const Li
     _["var1"] = sum(post_var1),
     _["var2"] = sum(post_var2),
     _["cov"] = sum(post_cov)
-    );
+  );
 }
 
 
@@ -863,8 +853,9 @@ const int& num_edges, const int& num_states, const int& num_term_nodes, const Li
 
 
 // [[Rcpp::export]]
-NumericVector joint_postmean_moments_phylojumps(const arma::imat& edge_mat, const arma::vec& edge_lengths, const arma::mat& rate_mat, const arma::ivec& edge_set1,
-const arma::ivec& edge_set2, const arma::vec& root_dist, const int& num_edges, const int& num_states, const int& num_term_nodes, const List& edge_moments, const int& N) {
+NumericVector joint_postmean_moments_phylojumps(arma::imat& edge_mat, arma::vec& edge_lengths, arma::mat& rate_mat,
+                                                arma::ivec& edge_set1, arma::ivec& edge_set2, arma::vec& root_dist,
+                                                int num_edges, int num_states, int num_term_nodes, List& edge_moments, int N) {
   
   // calculating prior moments
   NumericVector prior_moments = joint_prior_moments_phylojumps(edge_mat, edge_set1, edge_set2,
@@ -892,7 +883,7 @@ const arma::ivec& edge_set2, const arma::vec& root_dist, const int& num_edges, c
     _["var1"] = prior_var1 - mean_post_var1,
     _["var2"] = prior_var2 - mean_post_var2,
     _["cov"] = prior_cov - mean_post_cov
-    );
+  );
 }
 
 

@@ -2,10 +2,10 @@
 
 [![Travis-CI Build Status](https://travis-ci.org/dunleavy005/phylomoments.svg?branch=master)](https://travis-ci.org/dunleavy005/phylomoments)
 
-This R package implements a simulation-free dynamic programming algorithm for 
-calculating higher-order moments of stochastic mapping summaries on a 
-phylogeny. Utility functions related to simulation-based stochastic mapping 
-and continuous-time Markov chains (CTMCs) are also provided.
+This R package implements a simulation-free dynamic programming algorithm for
+calculating higher-order moments of stochastic mapping summaries on a
+phylogeny [3]. Utility functions related to simulation-based stochastic mapping [1]
+and first order moments [2] are also provided.
 
 ## Installation
 
@@ -43,10 +43,8 @@ You can access the `phylomoments` vignettes with `browseVignettes("phylomoments"
 
 ## References
 
-OUR PAPER!!!
+1. Nielsen R (2002) "Mapping mutations on phylogenies," *Systematic Biology,* 51(5):729-739.
 
-R. Nielsen (2002) "Mapping mutations on phylogenies," *Systematic Biology,* 51(5):729-739.
+2. Minin VN and Suchard MA (2008) "Counting labeled transitions in continuous-time Markov models of evolution," *Journal of Mathematical Biology,* 56(3):391-412.
 
-V.N. Minin and M.A. Suchard (2008) "Counting labeled transitions in continuous-time Markov models of evolution," *Journal of Mathematical Biology,* 56(3):391-412.
-
-
+3. Dhar A and Minin VN (2016) "Calculating higher-order moments of phylogenetic stochastic mapping summaries in linear time," http://arxiv.org/abs/1609.07844,

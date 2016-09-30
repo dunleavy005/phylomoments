@@ -5,7 +5,7 @@
 This R package implements a simulation-free dynamic programming algorithm for
 calculating higher-order moments of stochastic mapping summaries on a
 phylogeny [3]. Utility functions related to simulation-based stochastic mapping [1]
-and first order moments [2] are also provided.
+and first-order moments [2] are also provided.
 
 ## Installation
 

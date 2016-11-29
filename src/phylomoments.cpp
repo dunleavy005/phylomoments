@@ -136,9 +136,9 @@ NumericMatrix ctmc_sim(double t, arma::mat& rate_mat, int init_state) {
   state_vec(state_vec.size() - 1) = state_vec(state_vec.size() - 2);
   
   // storing output
-  NumericMatrix outp(2, time_vec.size());
-  outp(0, _) = state_vec;
-  outp(1, _) = time_vec;
+  NumericMatrix outp(time_vec.size(), 2);
+  outp(_, 0) = state_vec;
+  outp(_, 1) = time_vec;
   
   return outp;
 }
@@ -669,13 +669,13 @@ arma::imat phylojumps_sim(arma::imat& edge_mat, arma::vec& edge_lengths, arma::m
           
           // sampling rest of trajectory
           NumericMatrix ctmc_samp = ctmc_sim(edgelen - wait_time, rate_mat, new_state);
-          ctmc_states = ctmc_samp(0, _);
+          ctmc_states = ctmc_samp(_, 0);
           ctmc_states.push_front(node_states(parent_ind,k));
           
         } else {
           
           NumericMatrix ctmc_samp = ctmc_sim(edgelen, rate_mat, node_states(parent_ind,k));
-          ctmc_states = ctmc_samp(0, _);
+          ctmc_states = ctmc_samp(_, 0);
           
         }
         

@@ -138,9 +138,9 @@ ctmc.sim = function(t, rate.mat, states = c("a","c","g","t"), init.state) {
   
   init.state = match(init.state, states) - 1
   
-  outp = data.frame(t(ctmc_sim(t, rate.mat, init.state)))
-  outp[,1] = states[outp[,1] + 1]
+  outp = data.frame(ctmc_sim(t, rate.mat, init.state))
   colnames(outp) = c("state","time")
+  outp[,"state"] = states[outp[,"state"] + 1]
   
   outp
 }

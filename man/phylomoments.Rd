@@ -23,7 +23,7 @@ Amrit Dhar, Vladimir N. Minin
   Maintainer: Amrit Dhar \email{adhar@uw.edu}
 }
 \references{
-Nielsen R (2002) \dQuote{Mapping mutations on phylogenies,}
+Nielsen R (2002) \dQuote{Mapping mutations on phylogenies,} 
   \emph{Systematic Biology,} 51(5):729-739.
   
   Minin VN and Suchard MA (2008) \dQuote{Counting labeled transitions in 

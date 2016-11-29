@@ -39,7 +39,7 @@ substitutions per site.}
 }
 \value{
 A numeric vector holding the means, variances, and covariance of the 
-posterior mean of labeled substitution counts.
+  posterior mean of labeled substitution counts.
 }
 \description{
 This function calculates the means, variances, and covariance of the 

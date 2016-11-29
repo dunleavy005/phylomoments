@@ -18,7 +18,7 @@
 #'   
 #'   Maintainer: Amrit Dhar \email{adhar@@uw.edu}
 #'   
-#' @references Nielsen R (2002) \dQuote{Mapping mutations on phylogenies,}
+#' @references Nielsen R (2002) \dQuote{Mapping mutations on phylogenies,} 
 #'   \emph{Systematic Biology,} 51(5):729-739.
 #'   
 #'   Minin VN and Suchard MA (2008) \dQuote{Counting labeled transitions in 
@@ -395,7 +395,7 @@ phylojumps.sim = function(tree, rate.mat, root.dist, scale = FALSE, states = c("
 #'   substitution counts.
 #'   
 #' @references OUR PAPER!!!
-#' 
+#'   
 #' @seealso \code{\link{post.moments.phylojumps}}, 
 #'   \code{\link{postmean.moments.phylojumps}}, 
 #'   \code{\link{joint.prior.moments.phylojumps}}
@@ -472,7 +472,7 @@ prior.moments.phylojumps = function(tree, rate.mat, label.mat, edge.set, root.di
 #'   substitution counts summed over all sites in \code{seq.data}.
 #'   
 #' @references OUR PAPER!!!
-#' 
+#'   
 #' @seealso \code{\link{prior.moments.phylojumps}}, 
 #'   \code{\link{postmean.moments.phylojumps}}, 
 #'   \code{\link{joint.post.moments.phylojumps}}
@@ -559,7 +559,7 @@ post.moments.phylojumps = function(tree, rate.mat, label.mat, edge.set, root.dis
 #'   of labeled substitution counts.
 #'   
 #' @references OUR PAPER!!!
-#' 
+#'   
 #' @seealso \code{\link{prior.moments.phylojumps}}, 
 #'   \code{\link{post.moments.phylojumps}}, 
 #'   \code{\link{joint.postmean.moments.phylojumps}}
@@ -634,7 +634,7 @@ postmean.moments.phylojumps = function(tree, rate.mat, label.mat, edge.set, root
 #'   of labeled substitution counts.
 #'   
 #' @references OUR PAPER!!!
-#' 
+#'   
 #' @seealso \code{\link{joint.post.moments.phylojumps}}, 
 #'   \code{\link{joint.postmean.moments.phylojumps}}, 
 #'   \code{\link{prior.moments.phylojumps}}
@@ -738,7 +738,7 @@ joint.prior.moments.phylojumps = function(tree, rate.mat, label.mat, edge.set1 =
 #'   \code{seq.data}.
 #'   
 #' @references OUR PAPER!!!
-#' 
+#'   
 #' @seealso \code{\link{joint.prior.moments.phylojumps}}, 
 #'   \code{\link{joint.postmean.moments.phylojumps}}, 
 #'   \code{\link{post.moments.phylojumps}}
@@ -827,7 +827,7 @@ joint.post.moments.phylojumps = function(tree, rate.mat, label.mat, edge.set1 = 
 #'                                   edge.set1 = NULL, edge.set2 = NULL, 
 #'                                   subtree = NULL, root.dist,
 #'                                   scale = FALSE, N = 100000)
-#'                                   
+#' 
 #' @param tree A tree object of class \code{"phylo"} (\strong{ape} format).
 #' @param rate.mat A reversible continuous-time Markov chain (CTMC) rate matrix.
 #' @param label.mat A 0-1 matrix of the same size as \code{rate.mat}.  This 
@@ -846,12 +846,12 @@ joint.post.moments.phylojumps = function(tree, rate.mat, label.mat, edge.set1 = 
 #'   \code{TRUE}, then time is specified in terms of the expected number of CTMC
 #'   substitutions per site.
 #' @param N An integer specifying the number of Monte Carlo samples to draw.
-#' 
+#'   
 #' @return A numeric vector holding the means, variances, and covariance of the 
-#' posterior mean of labeled substitution counts.
-#' 
+#'   posterior mean of labeled substitution counts.
+#'   
 #' @references OUR PAPER!!!
-#' 
+#'   
 #' @seealso \code{\link{joint.prior.moments.phylojumps}}, 
 #'   \code{\link{joint.post.moments.phylojumps}}, 
 #'   \code{\link{postmean.moments.phylojumps}}

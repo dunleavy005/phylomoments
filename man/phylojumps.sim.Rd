@@ -47,7 +47,7 @@ More information on phylogenetic tree objects of class \code{"phylo"} can be
 found at \url{http://ape-package.ird.fr/misc/FormatTreeR_24Oct2012.pdf}.
 }
 \references{
-R. Nielsen (2002) \dQuote{Mapping mutations on phylogenies,} 
+Nielsen R (2002) \dQuote{Mapping mutations on phylogenies,} 
   \emph{Systematic Biology,} 51(5):729-739.
 }
 \seealso{

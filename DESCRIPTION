@@ -3,12 +3,14 @@ Type: Package
 Title: Efficient Computations of Phylogenetic Stochastic Mapping Moments
 Version: 1.0.0
 Date: 2016-05-16
-Authors@R: person("Amrit", "Dhar", email = "adhar@uw.edu",
-    role = c("aut", "cre"))
+Authors@R: as.person(c(
+    "Amrit Dhar <adhar@uw.edu> [aut, cre]",
+    "Vladimir Minin <vminin@uw.edu> [aut]"
+  ))
 Description: This package implements a simulation-free dynamic programming
     algorithm for calculating higher-order moments of stochastic mapping summaries
     on a phylogeny. Utility functions related to simulation-based stochastic mapping
-    and continuous-time Markov chains (CTMCs) are also provided.
+    and first-order moments are also provided.
 License: GPL-3
 Depends:
     R (>= 3.1.3)

@@ -42,7 +42,7 @@ The 0th restricted factorial moment matrix of labeled CTMC substitution
 counts is defined as the CTMC transition probability matrix.
 }
 \references{
-V.N. Minin and M.A. Suchard (2008) \dQuote{Counting labeled 
+Minin VN and Suchard MA (2008) \dQuote{Counting labeled 
   transitions in continuous-time Markov models of evolution,} \emph{Journal 
   of Mathematical Biology,} 56(3):391-412.
 }

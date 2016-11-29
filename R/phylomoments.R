@@ -8,22 +8,24 @@
 #' This package implements a simulation-free dynamic programming algorithm for 
 #' calculating higher-order moments of stochastic mapping summaries on a 
 #' phylogeny. Utility functions related to simulation-based stochastic mapping 
-#' and continuous-time Markov chains (CTMCs) are also provided.
+#' and first-order moments are also provided.
 #' 
 #' @section : Please see the vignettes for some examples of using the functions 
 #'   provided in this package.  They can be accessed using 
 #'   \code{browseVignettes("phylomoments")}.
 #'   
-#' @author Amrit Dhar \email{adhar@@uw.edu}
+#' @author Amrit Dhar, Vladimir N. Minin
 #'   
-#' @references OUR PAPER!!!
+#'   Maintainer: Amrit Dhar \email{adhar@@uw.edu}
 #'   
-#'   R. Nielsen (2002) \dQuote{Mapping mutations on phylogenies,} 
+#' @references Nielsen R (2002) \dQuote{Mapping mutations on phylogenies,}
 #'   \emph{Systematic Biology,} 51(5):729-739.
 #'   
-#'   V.N. Minin and M.A. Suchard (2008) \dQuote{Counting labeled transitions in 
+#'   Minin VN and Suchard MA (2008) \dQuote{Counting labeled transitions in 
 #'   continuous-time Markov models of evolution,} \emph{Journal of Mathematical 
 #'   Biology,} 56(3):391-412.
+#'   
+#'   OUR PAPER!!!
 #'   
 #' @docType package
 #' @name phylomoments
@@ -73,7 +75,7 @@ scale.rate.mat = function(rate.mat, root.dist) rate.mat / sum(-diag(rate.mat) * 
 #'   labeled CTMC substitution counts, respectively, for the time interval 
 #'   lengths defined by \code{t}.
 #'   
-#' @references V.N. Minin and M.A. Suchard (2008) \dQuote{Counting labeled 
+#' @references Minin VN and Suchard MA (2008) \dQuote{Counting labeled 
 #'   transitions in continuous-time Markov models of evolution,} \emph{Journal 
 #'   of Mathematical Biology,} 56(3):391-412.
 #'   
@@ -181,7 +183,7 @@ ctmc.sim = function(t, rate.mat, states = c("a","c","g","t"), init.state) {
 #'   independent sample of internal node states along with the observed tip 
 #'   states.
 #'   
-#' @references R. Nielsen (2002) \dQuote{Mapping mutations on phylogenies,} 
+#' @references Nielsen R (2002) \dQuote{Mapping mutations on phylogenies,} 
 #'   \emph{Systematic Biology,} 51(5):729-739.
 #'   
 #' @seealso \code{\link{tips.sim}}, \code{\link{phylojumps.sim}}
@@ -320,7 +322,7 @@ tips.sim = function(tree, rate.mat, root.dist, scale = FALSE, states = c("a","c"
 #'   the \emph{i}'th column contains \code{N} independent samples of 
 #'   substitution counts for the \emph{i}'th site in \code{seq.data}.
 #'   
-#' @references R. Nielsen (2002) \dQuote{Mapping mutations on phylogenies,} 
+#' @references Nielsen R (2002) \dQuote{Mapping mutations on phylogenies,} 
 #'   \emph{Systematic Biology,} 51(5):729-739.
 #'   
 #' @seealso \code{\link{int.states.sim}}, \code{\link{tips.sim}}

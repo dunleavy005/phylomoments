@@ -1,5 +1,4 @@
 Package: phylomoments
-Type: Package
 Title: Efficient Computations of Phylogenetic Stochastic Mapping Moments
 Version: 1.0.0
 Date: 2016-05-16

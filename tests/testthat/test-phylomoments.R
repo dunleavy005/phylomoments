@@ -37,10 +37,6 @@ test_that("(prior/post).moments.phylojumps compute the correct moments", {
   ## PHAST does not output the correct prior variance
   expect_equal(my.post.moments[["mean"]], exp.moments[["posterior.mean"]], tol = 1e-5)
   expect_equal(my.post.moments[["var"]], exp.moments[["posterior.var"]], tol = 1e-5)
-  expect_equal_to_reference(my.prior.moments[["mean"]], "prior_mean.rds")
-  expect_equal_to_reference(my.prior.moments[["var"]], "prior_var.rds")
-  expect_equal_to_reference(my.post.moments[["mean"]], "post_mean.rds")
-  expect_equal_to_reference(my.post.moments[["var"]], "post_var.rds")
   
   edge.moments = moments.ctmcjumps(edge.lengths, rate.mat, label.mat)
   int.states = int.states.sim(my.tree, rate.mat, root.dist,
@@ -82,13 +78,11 @@ test_that("postmean.moments.phylojumps computes the correct moments", {
   
   expect_true(SS(my.postmean.moments[["mean"]], mean(post.means)) <= 1e-5)
   expect_true(SS(my.postmean.moments[["var"]], var(post.means)) <= 1e-2)
-  expect_equal_to_reference(my.postmean.moments[["mean"]], "prior_mean.rds")
-  expect_equal_to_reference(my.postmean.moments[["var"]], "postmean_var.rds")
 })
 
 test_that("joint.(prior/post/postmean).moments.phylojumps compute the correct moments", {
   sub.node = 14
-  sub.edges = edge.set[apply(edge.mat, 1, function(row) any(row == sub.node))]
+  sub.edges = find_subtree_edges(sub.node, edge.mat)
   sup.edges = setdiff(edge.set, sub.edges)
   exp.moments = rphast::phyloP.sph(phast.tree, phast.data, subtree = "t10-t6", fit.model = FALSE)
   my.joint.prior.moments = joint.prior.moments.phylojumps(my.tree, rate.mat, label.mat, sub.edges,
@@ -130,9 +124,13 @@ test_that("joint.(prior/post/postmean).moments.phylojumps compute the correct mo
   exp.prior.var = sum(my.joint.prior.moments[c("var1", "var2")]) + 2 * my.joint.prior.moments[["cov"]]
   exp.post.var = sum(my.joint.post.moments[c("var1", "var2")]) + 2 * my.joint.post.moments[["cov"]]
   exp.postmean.var = sum(my.joint.postmean.moments[c("var1", "var2")]) + 2 * my.joint.postmean.moments[["cov"]]
+  my.prior.moments = prior.moments.phylojumps(my.tree, rate.mat, label.mat, edge.set, root.dist)
+  my.post.moments = post.moments.phylojumps(my.tree, rate.mat, label.mat, edge.set,
+                                            root.dist, states = states, seq.data = tip.data)
+  my.postmean.moments = postmean.moments.phylojumps(my.tree, rate.mat, label.mat, edge.set, root.dist, N = 50000)
   
-  expect_equal_to_reference(exp.prior.var, "prior_var.rds")
-  expect_equal_to_reference(exp.post.var, "post_var.rds")
-  expect_equal_to_reference(exp.postmean.var, "postmean_var.rds", tol = 1e-3)
+  expect_equal(my.prior.moments[["var"]], exp.prior.var, tol = 1e-5)
+  expect_equal(my.post.moments[["var"]], exp.post.var, tol = 1e-5)
+  expect_equal(my.postmean.moments[["var"]], exp.postmean.var, tol = 1e-2)
 })
 

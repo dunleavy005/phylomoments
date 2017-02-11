@@ -81,10 +81,10 @@ test_that("postmean.moments.phylojumps computes the correct moments", {
 })
 
 test_that("joint.(prior/post/postmean).moments.phylojumps compute the correct moments", {
-  sub.node = 14
+  sub.node = which(my.tree$node.label == "5") + length(my.tree$tip.label)
   sub.edges = find_subtree_edges(sub.node, edge.mat)
   sup.edges = setdiff(edge.set, sub.edges)
-  exp.moments = rphast::phyloP.sph(phast.tree, phast.data, subtree = "t10-t6", fit.model = FALSE)
+  exp.moments = rphast::phyloP.sph(phast.tree, phast.data, subtree = "5", fit.model = FALSE)
   my.joint.prior.moments = joint.prior.moments.phylojumps(my.tree, rate.mat, label.mat, sub.edges,
                                                           sup.edges, root.dist = root.dist)
   my.joint.post.moments = joint.post.moments.phylojumps(my.tree, rate.mat, label.mat, sub.edges, sup.edges,

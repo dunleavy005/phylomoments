@@ -4,6 +4,7 @@ set.seed(0)
 ## example phylogenetic tree
 my.tree = ape::rtree(10, rooted = TRUE)
 my.tree = reorder(my.tree, order = "pruningwise")
+my.tree$node.label = as.character(1:(length(my.tree$tip.label) - 1))
 
 ## CTMC states
 states = c("a", "b", "c")
@@ -17,7 +18,6 @@ diag(rate.mat) = -apply(rate.mat, 1, sum)
 ## PHAST phylogenetic tree
 phast.tree = rphast::tm(ape::write.tree(my.tree), subst.mod = "F81",
                         rate.matrix = rate.mat, backgd = root.dist, alphabet = "abc")
-phast.tree$tree = rphast::name.ancestors(phast.tree$tree)
 
 ## label matrix (all states) & edge set (all edges)
 label.mat = matrix(1, nrow = 3, ncol = 3) - diag(1, 3)

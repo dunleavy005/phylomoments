@@ -11,13 +11,13 @@ Hash: 20a88b2c9c84aecff2702789a4d102f5
 
 Package: Rcpp
 Source: CRAN
-Version: 0.12.4
-Hash: 115167d29098a4fd1e572fdbef809438
+Version: 0.12.8
+Hash: 436ad5c23fad4e22224c7ac2fc82b049
 
 Package: RcppArmadillo
 Source: CRAN
 Version: 0.6.700.3.0
-Hash: d5947b98db0299b6a21b33d080de0262
+Hash: b827cd1187a78ddeb14c741a30c4c099
 Requires: Rcpp
 
 Package: ape
@@ -83,7 +83,7 @@ Hash: 114ef5abcf58bebbf6ac083b9cacbbd8
 Package: htmltools
 Source: CRAN
 Version: 0.3.5
-Hash: 56b2a44852ab64c3dd8ef05f725b0079
+Hash: 49415ab4718e9d37c7ddf74988493c23
 Requires: Rcpp, digest
 
 Package: httr

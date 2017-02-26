@@ -14,7 +14,7 @@ License: GPL-3
 Depends:
     R (>= 3.2.5)
 Imports:
-    Rcpp (>= 0.12.4)
+    Rcpp (>= 0.12.8)
 Suggests:
     ape (>= 3.4),
     knitr (>= 1.12.3),

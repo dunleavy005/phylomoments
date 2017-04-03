@@ -24,6 +24,7 @@ Package: ape
 Source: CRAN
 Version: 3.4
 Hash: 27269ec5e079292fd9c5f4bc60c56a36
+Requires: lattice, nlme
 
 Package: bitops
 Source: CRAN
@@ -103,6 +104,11 @@ Version: 1.12.3
 Hash: d537760d13021cf23fa2446381d9e0b2
 Requires: digest, evaluate, formatR, highr, markdown, stringr, yaml
 
+Package: lattice
+Source: CRAN
+Version: 0.20-35
+Hash: 26b9d7f0d0cb4e1d1bbb97f867c82d89
+
 Package: magrittr
 Source: CRAN
 Version: 1.5
@@ -124,6 +130,12 @@ Package: mime
 Source: CRAN
 Version: 0.4
 Hash: b08c52dae92a0a11e64a4deea032ec33
+
+Package: nlme
+Source: CRAN
+Version: 3.1-131
+Hash: 7f5580f9c481d6921298f224c391b308
+Requires: lattice
 
 Package: openssl
 Source: CRAN

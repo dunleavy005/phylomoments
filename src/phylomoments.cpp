@@ -154,11 +154,11 @@ List stoch_mapping_lists(imat& edge_mat, ivec& edge_set, int num_edges, int num_
   NumericVector tmp_vec;
   
   tmp_vec = edge_moments["zeroth"];
-  cube prob_mat(tmp_vec.begin(), num_states, num_states, num_edges, true);
+  cube prob_mat(tmp_vec.begin(), num_states, num_states, num_edges);
   tmp_vec = edge_moments["first"];
-  cube moments_first(tmp_vec.begin(), num_states, num_states, num_edges, true);
+  cube moments_first(tmp_vec.begin(), num_states, num_states, num_edges);
   tmp_vec = edge_moments["second"];
-  cube moments_second(tmp_vec.begin(), num_states, num_states, num_edges, true);
+  cube moments_second(tmp_vec.begin(), num_states, num_states, num_edges);
   
   // preparing for bottom-up tree traversal
   mat downward_lik(num_states, 2*num_term_nodes - 1, fill::zeros);
@@ -240,11 +240,11 @@ List joint_stoch_mapping_lists(imat& edge_mat, ivec& edge_set1, ivec& edge_set2,
   NumericVector tmp_vec;
   
   tmp_vec = edge_moments["zeroth"];
-  cube prob_mat(tmp_vec.begin(), num_states, num_states, num_edges, true);
+  cube prob_mat(tmp_vec.begin(), num_states, num_states, num_edges);
   tmp_vec = edge_moments["first"];
-  cube moments_first(tmp_vec.begin(), num_states, num_states, num_edges, true);
+  cube moments_first(tmp_vec.begin(), num_states, num_states, num_edges);
   tmp_vec = edge_moments["second"];
-  cube moments_second(tmp_vec.begin(), num_states, num_states, num_edges, true);
+  cube moments_second(tmp_vec.begin(), num_states, num_states, num_edges);
   
   // preparing for bottom-up tree traversal
   mat downward_lik(num_states, 2*num_term_nodes - 1, fill::zeros);
@@ -422,7 +422,7 @@ arma::imat int_states_sim(arma::imat& edge_mat, arma::vec& edge_lengths, arma::m
   vec state_prob = (downward_lik.col(num_term_nodes) % root_dist) / dot(downward_lik.col(num_term_nodes), root_dist);
   
   IntegerVector sample_vec = sample(states, N, true, wrap(state_prob));
-  node_states.row(num_term_nodes) = irowvec(sample_vec.begin(), sample_vec.size(), true);
+  node_states.row(num_term_nodes) = irowvec(sample_vec.begin(), sample_vec.size());
   
   num_to_sample -= 1;
   
@@ -456,7 +456,7 @@ arma::imat int_states_sim(arma::imat& edge_mat, arma::vec& edge_lengths, arma::m
         dot(downward_lik.col(current_ind(0)), prob_mat.slice(edge_ind(0)).row(m).t());
         
         sample_vec = sample(states, col_ind.n_elem, true, wrap(state_prob));
-        node_states(current_ind, col_ind) = irowvec(sample_vec.begin(), sample_vec.size(), true);
+        node_states(current_ind, col_ind) = irowvec(sample_vec.begin(), sample_vec.size());
       }
       
       num_to_sample -= 1;
@@ -599,7 +599,7 @@ arma::imat tips_sim(arma::imat& edge_mat, arma::vec& edge_lengths, arma::mat& ra
   
   // sampling root node states
   IntegerVector sample_vec = sample(states, N, true, wrap(root_dist));
-  node_states.row(num_term_nodes) = irowvec(sample_vec.begin(), sample_vec.size(), true);
+  node_states.row(num_term_nodes) = irowvec(sample_vec.begin(), sample_vec.size());
   
   // sampling states for remaining nodes
   for (int i = (num_edges - 1); i > 0; i -= 2) {
@@ -614,10 +614,10 @@ arma::imat tips_sim(arma::imat& edge_mat, arma::vec& edge_lengths, arma::mat& ra
       uvec col_ind = find(node_states.row(parent_ind) == m);
       
       sample_vec = sample(states, col_ind.n_elem, true, wrap(prob_mat.slice(i-1).row(m).t()));
-      node_states(lchild_ind, col_ind) = irowvec(sample_vec.begin(), sample_vec.size(), true);
+      node_states(lchild_ind, col_ind) = irowvec(sample_vec.begin(), sample_vec.size());
       
       sample_vec = sample(states, col_ind.n_elem, true, wrap(prob_mat.slice(i).row(m).t()));
-      node_states(rchild_ind, col_ind) = irowvec(sample_vec.begin(), sample_vec.size(), true);
+      node_states(rchild_ind, col_ind) = irowvec(sample_vec.begin(), sample_vec.size());
     }
   }
   

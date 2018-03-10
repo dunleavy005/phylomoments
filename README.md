@@ -43,8 +43,8 @@ You can access the `phylomoments` vignettes with `browseVignettes("phylomoments"
 
 ## References
 
-1. Nielsen R (2002) "Mapping mutations on phylogenies," *Systematic Biology,* 51(5):729-739.
+1. Nielsen R (2002) "Mapping mutations on phylogenies", *Systematic Biology*, 51(5):729-739.
 
-2. Minin VN and Suchard MA (2008) "Counting labeled transitions in continuous-time Markov models of evolution," *Journal of Mathematical Biology,* 56(3):391-412.
+2. Minin VN and Suchard MA (2008) "Counting labeled transitions in continuous-time Markov models of evolution", *Journal of Mathematical Biology*, 56(3):391-412.
 
-3. Dhar A and Minin VN (2016) "Calculating higher-order moments of phylogenetic stochastic mapping summaries in linear time," http://arxiv.org/abs/1609.07844.
+3. Dhar A and Minin VN (2017) "Calculating Higher-Order Moments of Phylogenetic Stochastic Mapping Summaries in Linear Time", *Journal of Computational Biology*, 24(5):377-399.

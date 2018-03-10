@@ -23,13 +23,15 @@ Amrit Dhar, Vladimir N. Minin
   Maintainer: Amrit Dhar \email{adhar@uw.edu}
 }
 \references{
-Nielsen R (2002) \dQuote{Mapping mutations on phylogenies,} 
-  \emph{Systematic Biology,} 51(5):729-739.
+Nielsen R (2002) \dQuote{Mapping mutations on phylogenies}, 
+  \emph{Systematic Biology}, 51(5):729-739.
   
   Minin VN and Suchard MA (2008) \dQuote{Counting labeled transitions in 
-  continuous-time Markov models of evolution,} \emph{Journal of Mathematical 
-  Biology,} 56(3):391-412.
+  continuous-time Markov models of evolution}, \emph{Journal of Mathematical 
+  Biology}, 56(3):391-412.
   
-  OUR PAPER!!!
+  Dhar A and Minin VN (2017) \dQuote{Calculating Higher-Order Moments of 
+  Phylogenetic Stochastic Mapping Summaries in Linear Time}, \emph{Journal of
+  Computational Biology}, 24(5):377-399.
 }
 

@@ -18,14 +18,16 @@
 #'   
 #'   Maintainer: Amrit Dhar \email{adhar@@uw.edu}
 #'   
-#' @references Nielsen R (2002) \dQuote{Mapping mutations on phylogenies,} 
-#'   \emph{Systematic Biology,} 51(5):729-739.
+#' @references Nielsen R (2002) \dQuote{Mapping mutations on phylogenies}, 
+#'   \emph{Systematic Biology}, 51(5):729-739.
 #'   
 #'   Minin VN and Suchard MA (2008) \dQuote{Counting labeled transitions in 
-#'   continuous-time Markov models of evolution,} \emph{Journal of Mathematical 
-#'   Biology,} 56(3):391-412.
+#'   continuous-time Markov models of evolution}, \emph{Journal of Mathematical 
+#'   Biology}, 56(3):391-412.
 #'   
-#'   OUR PAPER!!!
+#'   Dhar A and Minin VN (2017) \dQuote{Calculating Higher-Order Moments of 
+#'   Phylogenetic Stochastic Mapping Summaries in Linear Time}, \emph{Journal of
+#'   Computational Biology}, 24(5):377-399.
 #'   
 #' @docType package
 #' @name phylomoments
@@ -76,8 +78,8 @@ scale.rate.mat = function(rate.mat, root.dist) rate.mat / sum(-diag(rate.mat) * 
 #'   lengths defined by \code{t}.
 #'   
 #' @references Minin VN and Suchard MA (2008) \dQuote{Counting labeled 
-#'   transitions in continuous-time Markov models of evolution,} \emph{Journal 
-#'   of Mathematical Biology,} 56(3):391-412.
+#'   transitions in continuous-time Markov models of evolution}, \emph{Journal 
+#'   of Mathematical Biology}, 56(3):391-412.
 #'   
 #' @seealso \code{\link{ctmc.sim}}
 #'   
@@ -183,8 +185,8 @@ ctmc.sim = function(t, rate.mat, states = c("a","c","g","t"), init.state) {
 #'   independent sample of internal node states along with the observed tip 
 #'   states.
 #'   
-#' @references Nielsen R (2002) \dQuote{Mapping mutations on phylogenies,} 
-#'   \emph{Systematic Biology,} 51(5):729-739.
+#' @references Nielsen R (2002) \dQuote{Mapping mutations on phylogenies}, 
+#'   \emph{Systematic Biology}, 51(5):729-739.
 #'   
 #' @seealso \code{\link{tips.sim}}, \code{\link{phylojumps.sim}}
 #'   
@@ -322,8 +324,8 @@ tips.sim = function(tree, rate.mat, root.dist, scale = FALSE, states = c("a","c"
 #'   the \emph{i}'th column contains \code{N} independent samples of 
 #'   substitution counts for the \emph{i}'th site in \code{seq.data}.
 #'   
-#' @references Nielsen R (2002) \dQuote{Mapping mutations on phylogenies,} 
-#'   \emph{Systematic Biology,} 51(5):729-739.
+#' @references Nielsen R (2002) \dQuote{Mapping mutations on phylogenies}, 
+#'   \emph{Systematic Biology}, 51(5):729-739.
 #'   
 #' @seealso \code{\link{int.states.sim}}, \code{\link{tips.sim}}
 #'   
@@ -394,7 +396,9 @@ phylojumps.sim = function(tree, rate.mat, root.dist, scale = FALSE, states = c("
 #' @return A numeric vector holding the prior mean and variance of labeled 
 #'   substitution counts.
 #'   
-#' @references OUR PAPER!!!
+#' @references Dhar A and Minin VN (2017) \dQuote{Calculating Higher-Order 
+#'   Moments of Phylogenetic Stochastic Mapping Summaries in Linear Time}, 
+#'   \emph{Journal of Computational Biology}, 24(5):377-399.
 #'   
 #' @seealso \code{\link{post.moments.phylojumps}}, 
 #'   \code{\link{postmean.moments.phylojumps}}, 
@@ -471,7 +475,9 @@ prior.moments.phylojumps = function(tree, rate.mat, label.mat, edge.set, root.di
 #' @return A numeric vector holding the posterior mean and variance of labeled 
 #'   substitution counts summed over all sites in \code{seq.data}.
 #'   
-#' @references OUR PAPER!!!
+#' @references Dhar A and Minin VN (2017) \dQuote{Calculating Higher-Order 
+#'   Moments of Phylogenetic Stochastic Mapping Summaries in Linear Time}, 
+#'   \emph{Journal of Computational Biology}, 24(5):377-399.
 #'   
 #' @seealso \code{\link{prior.moments.phylojumps}}, 
 #'   \code{\link{postmean.moments.phylojumps}}, 
@@ -558,7 +564,9 @@ post.moments.phylojumps = function(tree, rate.mat, label.mat, edge.set, root.dis
 #' @return A numeric vector holding the mean and variance of the posterior mean 
 #'   of labeled substitution counts.
 #'   
-#' @references OUR PAPER!!!
+#' @references Dhar A and Minin VN (2017) \dQuote{Calculating Higher-Order 
+#'   Moments of Phylogenetic Stochastic Mapping Summaries in Linear Time}, 
+#'   \emph{Journal of Computational Biology}, 24(5):377-399.
 #'   
 #' @seealso \code{\link{prior.moments.phylojumps}}, 
 #'   \code{\link{post.moments.phylojumps}}, 
@@ -633,7 +641,9 @@ postmean.moments.phylojumps = function(tree, rate.mat, label.mat, edge.set, root
 #' @return A numeric vector holding the prior means, variances, and covariance 
 #'   of labeled substitution counts.
 #'   
-#' @references OUR PAPER!!!
+#' @references Dhar A and Minin VN (2017) \dQuote{Calculating Higher-Order 
+#'   Moments of Phylogenetic Stochastic Mapping Summaries in Linear Time}, 
+#'   \emph{Journal of Computational Biology}, 24(5):377-399.
 #'   
 #' @seealso \code{\link{joint.post.moments.phylojumps}}, 
 #'   \code{\link{joint.postmean.moments.phylojumps}}, 
@@ -737,7 +747,9 @@ joint.prior.moments.phylojumps = function(tree, rate.mat, label.mat, edge.set1 =
 #'   covariance of labeled substitution counts summed over all sites in 
 #'   \code{seq.data}.
 #'   
-#' @references OUR PAPER!!!
+#' @references Dhar A and Minin VN (2017) \dQuote{Calculating Higher-Order
+#'   Moments of Phylogenetic Stochastic Mapping Summaries in Linear Time},
+#'   \emph{Journal of Computational Biology}, 24(5):377-399.
 #'   
 #' @seealso \code{\link{joint.prior.moments.phylojumps}}, 
 #'   \code{\link{joint.postmean.moments.phylojumps}}, 
@@ -850,7 +862,9 @@ joint.post.moments.phylojumps = function(tree, rate.mat, label.mat, edge.set1 = 
 #' @return A numeric vector holding the means, variances, and covariance of the 
 #'   posterior mean of labeled substitution counts.
 #'   
-#' @references OUR PAPER!!!
+#' @references Dhar A and Minin VN (2017) \dQuote{Calculating Higher-Order 
+#'   Moments of Phylogenetic Stochastic Mapping Summaries in Linear Time}, 
+#'   \emph{Journal of Computational Biology}, 24(5):377-399.
 #'   
 #' @seealso \code{\link{joint.prior.moments.phylojumps}}, 
 #'   \code{\link{joint.post.moments.phylojumps}}, 

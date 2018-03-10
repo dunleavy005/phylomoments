@@ -49,7 +49,9 @@ More information on phylogenetic tree objects of class \code{"phylo"} can be
 found at \url{http://ape-package.ird.fr/misc/FormatTreeR_24Oct2012.pdf}.
 }
 \references{
-OUR PAPER!!!
+Dhar A and Minin VN (2017) \dQuote{Calculating Higher-Order 
+  Moments of Phylogenetic Stochastic Mapping Summaries in Linear Time}, 
+  \emph{Journal of Computational Biology}, 24(5):377-399.
 }
 \seealso{
 \code{\link{prior.moments.phylojumps}}, 

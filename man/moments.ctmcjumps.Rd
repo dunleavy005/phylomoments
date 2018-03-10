@@ -43,8 +43,8 @@ counts is defined as the CTMC transition probability matrix.
 }
 \references{
 Minin VN and Suchard MA (2008) \dQuote{Counting labeled 
-  transitions in continuous-time Markov models of evolution,} \emph{Journal 
-  of Mathematical Biology,} 56(3):391-412.
+  transitions in continuous-time Markov models of evolution}, \emph{Journal 
+  of Mathematical Biology}, 56(3):391-412.
 }
 \seealso{
 \code{\link{ctmc.sim}}
